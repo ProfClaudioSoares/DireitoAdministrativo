@@ -83,6 +83,43 @@ migrações e `pg_cron` — continua no **Supabase**; nada disso vai para o Verc
 > nem de `public/`). Para um deploy fiel, garanta que os quatro `.ttf` estão no
 > bucket e que o usuário autenticado tem leitura nele (política em `0003_storage.sql`).
 
+## Deploy automatizado
+
+Duas formas, complementares:
+
+### a) Script local — `scripts/deploy.sh`
+Orquestra Supabase (link, migrações, secrets, upload de assets da marca, deploy
+das functions) + Vercel (pull, build, deploy). Usa os CLIs via `npx`, não hardcoda
+segredo — tudo vem do ambiente. Exemplo:
+
+```bash
+export SUPABASE_ACCESS_TOKEN=… SUPABASE_PROJECT_REF=… SUPABASE_DB_PASSWORD=…
+export SUPABASE_SERVICE_ROLE_KEY=…            # p/ subir fontes/PNGs ao bucket
+export VITE_SUPABASE_URL=…                     # url do projeto
+export ANTHROPIC_API_KEY=… IG_USER_ID=… META_LONG_LIVED_TOKEN=…   # secrets das functions
+export VERCEL_TOKEN=… VERCEL_ORG_ID=… VERCEL_PROJECT_ID=…
+# coloque os .ttf/.png em ./brand-assets/ (nomes em src/brand/*/README.md)
+./scripts/deploy.sh                 # produção;  ./scripts/deploy.sh preview  p/ preview
+```
+
+Só subir as fontes/assets ao bucket: `node scripts/upload-brand.mjs ./brand-assets`.
+
+### b) GitHub Actions — `.github/workflows/deploy.yml`
+- **PR:** `check` (typecheck + testes + build) e **preview** no Vercel.
+- **push na `main`:** produção no Vercel + migrações e functions no Supabase.
+
+Configure em **Settings → Secrets and variables → Actions**:
+
+| Secret | Para quê |
+|---|---|
+| `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` | deploy do front-end |
+| `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD` | migrações + functions |
+
+As `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` do build vêm das **Environment
+Variables do projeto no Vercel** (o `vercel pull` as busca) — não precisam ir ao
+GitHub. Os secrets das Edge Functions e os segredos do Vault (cron) são definidos
+uma vez, fora do CI (via `deploy.sh` ou manualmente).
+
 ## Pré-requisitos externos (o app não resolve sozinho — §10)
 
 Conta Instagram profissional ligada a uma Página, app no Meta for Developers,

@@ -13,3 +13,6 @@ supabase/.temp
 src/brand/fonts/*.ttf
 
 *.tsbuildinfo
+
+# Binários da marca colocados localmente para upload ao bucket
+brand-assets/

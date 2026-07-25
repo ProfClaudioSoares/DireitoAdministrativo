@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { invokeFunction } from '@/lib/supabase'
+import { createDemoPost } from '@/lib/demo'
 import { PILLARS, type Pillar } from '@/lib/types'
 
 const ANGLES = [
@@ -17,7 +18,21 @@ export default function GeneratorPage() {
   const [count, setCount] = useState(7)
   const [angle, setAngle] = useState('')
   const [loading, setLoading] = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  async function onDemo() {
+    setError(null)
+    setDemoLoading(true)
+    try {
+      const postId = await createDemoPost()
+      navigate(`/estudio/${postId}`)
+    } catch (e) {
+      setError((e as Error).message || 'Falha ao criar o exemplo.')
+    } finally {
+      setDemoLoading(false)
+    }
+  }
 
   async function onGenerate() {
     setError(null)
@@ -98,13 +113,28 @@ export default function GeneratorPage() {
 
       {error && <p className="text-red-400 mb-4 text-sm">{error}</p>}
 
-      <button
-        disabled={loading || !topic.trim()}
-        onClick={onGenerate}
-        className="bg-amber text-ink font-medium px-6 py-3 rounded disabled:opacity-40 hover:bg-amber-hi transition-colors"
-      >
-        {loading ? 'Gerando…' : 'Gerar carrossel'}
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          disabled={loading || !topic.trim()}
+          onClick={onGenerate}
+          className="bg-amber text-ink font-medium px-6 py-3 rounded disabled:opacity-40 hover:bg-amber-hi transition-colors"
+        >
+          {loading ? 'Gerando…' : 'Gerar carrossel'}
+        </button>
+
+        {/* Demo: não chama a IA nem Edge Functions — semeia um exemplo no banco
+            para percorrer edição → conformidade → agenda só com login. */}
+        <button
+          disabled={demoLoading}
+          onClick={onDemo}
+          className="border border-grey-dark text-grey px-6 py-3 rounded disabled:opacity-40 hover:border-amber hover:text-paper transition-colors"
+        >
+          {demoLoading ? 'Criando…' : 'Criar exemplo (demo)'}
+        </button>
+      </div>
+      <p className="text-xs text-grey/70 mt-3">
+        O exemplo dispensa a chave da IA: gera um carrossel pronto no banco para você testar o fluxo.
+      </p>
 
       {loading && (
         <div className="mt-10 grid grid-cols-3 gap-4">

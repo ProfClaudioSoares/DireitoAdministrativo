@@ -39,9 +39,10 @@ brand, lib) e `supabase/` (migrations + functions). O import map em
 ## Setup
 
 1. **Instalar:** `npm install`
-2. **Fontes/assets da marca:** baixe os quatro `.ttf` (ver `src/brand/fonts/README.md`)
-   para `public/fonts/` e suba-os + os três PNGs (ver `src/brand/assets/README.md`)
-   para o bucket `brand` do Supabase.
+2. **Fontes/assets da marca:** suba os quatro `.ttf` (ver `src/brand/fonts/README.md`)
+   e os três PNGs (ver `src/brand/assets/README.md`) para o bucket `brand` do
+   Supabase. As fontes são baixadas em runtime do bucket e injetadas via CSS Font
+   Loading API (`src/lib/fonts.ts`) — nada de binário no repositório nem em `public/`.
 3. **Env:** copie `.env.example` para `.env` e preencha `VITE_SUPABASE_URL` /
    `VITE_SUPABASE_ANON_KEY` (somente valores públicos).
 4. **Banco:** aplique as migrações de `supabase/migrations/` (`supabase db push`).
@@ -78,10 +79,9 @@ migrações e `pg_cron` — continua no **Supabase**; nada disso vai para o Verc
    `https://<projeto>.vercel.app`) em Supabase → Authentication → URL
    Configuration (Site URL / Redirect URLs).
 
-> ⚠ **Fontes da marca:** os `.ttf` não estão versionados (binários da marca).
-> Sem eles em `public/fonts/`, o preview cai na fonte de fallback e a medição
-> degrada. Para um deploy fiel, adicione os `.ttf` a `public/fonts/` (podem ser
-> commitados numa branch de deploy ou injetados no build).
+> **Fontes da marca:** vêm do bucket `brand` do Supabase em runtime (não do repo
+> nem de `public/`). Para um deploy fiel, garanta que os quatro `.ttf` estão no
+> bucket e que o usuário autenticado tem leitura nele (política em `0003_storage.sql`).
 
 ## Pré-requisitos externos (o app não resolve sozinho — §10)
 

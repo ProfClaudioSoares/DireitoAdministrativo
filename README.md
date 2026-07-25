@@ -55,6 +55,34 @@ brand, lib) e `supabase/` (migrations + functions). O import map em
 
 - `npm run dev` · `npm run build` · `npm run typecheck` · `npm test`
 
+## Deploy no Vercel (só o front-end)
+
+O Vercel hospeda **apenas o SPA** (build do Vite). O backend — Edge Functions,
+migrações e `pg_cron` — continua no **Supabase**; nada disso vai para o Vercel.
+
+1. **Conecte o repositório** em [vercel.com/new](https://vercel.com/new) →
+   importe `ProfClaudioSoares/DireitoAdministrativo`. O `vercel.json` já define
+   framework `vite`, `outputDirectory: dist` e o rewrite de SPA (todas as rotas →
+   `index.html`, para o React Router).
+2. **Variáveis de ambiente** (Project → Settings → Environment Variables, para
+   Production e Preview) — o Vite embute no build, então precisam existir *antes*
+   do build:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+
+   ⚠ Só valores públicos. Nenhuma chave de serviço/IA/Meta vai ao Vercel — elas
+   vivem nos secrets do Supabase (§12 critério 8).
+3. **Deploy.** Cada push na branch dispara um Preview; merge na `main` publica em
+   produção.
+4. **CORS/Auth do Supabase:** adicione o domínio do Vercel (ex.
+   `https://<projeto>.vercel.app`) em Supabase → Authentication → URL
+   Configuration (Site URL / Redirect URLs).
+
+> ⚠ **Fontes da marca:** os `.ttf` não estão versionados (binários da marca).
+> Sem eles em `public/fonts/`, o preview cai na fonte de fallback e a medição
+> degrada. Para um deploy fiel, adicione os `.ttf` a `public/fonts/` (podem ser
+> commitados numa branch de deploy ou injetados no build).
+
 ## Pré-requisitos externos (o app não resolve sozinho — §10)
 
 Conta Instagram profissional ligada a uma Página, app no Meta for Developers,

@@ -4,6 +4,8 @@ import StudioPage from '@/studio/StudioPage'
 import CompliancePage from '@/compliance/CompliancePage'
 import CalendarPage from '@/calendar/CalendarPage'
 import LibraryPage from '@/library/LibraryPage'
+import Login from './Login'
+import { useSession, signOut } from '@/lib/auth'
 
 const NAV = [
   { to: '/gerar', label: 'Gerar' },
@@ -12,6 +14,15 @@ const NAV = [
 ]
 
 export default function App() {
+  const { session, loading } = useSession()
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center text-grey">Carregando…</div>
+  }
+
+  // Gate de autenticação: sem sessão, a RLS (owner_id = auth.uid()) barra tudo.
+  if (!session) return <Login />
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-grey-dark/40 px-6 py-4 flex items-center gap-8">
@@ -31,6 +42,12 @@ export default function App() {
             </NavLink>
           ))}
         </nav>
+        <div className="ml-auto flex items-center gap-4 text-sm text-grey">
+          <span className="hidden sm:inline">{session.user.email}</span>
+          <button onClick={() => void signOut()} className="hover:text-paper transition-colors">
+            Sair
+          </button>
+        </div>
       </header>
 
       <main className="flex-1">

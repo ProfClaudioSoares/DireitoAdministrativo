@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fontes da marca servidas LOCALMENTE (não CDN). Copie os .ttf de
+   src/brand/fonts/ para public/fonts/. As MESMAS instâncias estáticas que a
+   Edge Function usa no satori — para que o preview case com o PNG. */
+@font-face {
+  font-family: 'Playfair Display';
+  font-weight: 500;
+  font-style: normal;
+  src: url('/fonts/PlayfairDisplay-Medium.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'Playfair Display';
+  font-weight: 500;
+  font-style: italic;
+  src: url('/fonts/PlayfairDisplay-MediumItalic.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'Jost';
+  font-weight: 300;
+  font-style: normal;
+  src: url('/fonts/Jost-Light.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'Jost';
+  font-weight: 500;
+  font-style: normal;
+  src: url('/fonts/Jost-Medium.ttf') format('truetype');
+  font-display: block;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: #050505;
+  color: #F0EDE6;
+  font-family: 'Jost', system-ui, sans-serif;
+}

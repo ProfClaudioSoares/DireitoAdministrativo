@@ -22,6 +22,8 @@ export interface SlideContent {
   title?: string | null
   body?: string | null
   citation?: string | null
+  /** imagem já resolvida (URL assinada no preview; data URI no satori). Templates T8/T9. */
+  image?: string | null
 }
 
 export interface TemplateProps {

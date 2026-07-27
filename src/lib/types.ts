@@ -25,7 +25,7 @@ export type PostStatus =
   | 'published'
   | 'failed'
 
-export type TemplateId = 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'T6' | 'T7'
+export type TemplateId = 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'T6' | 'T7' | 'T8' | 'T9'
 
 export interface Post {
   id: string
@@ -58,6 +58,8 @@ export interface Slide {
   body: string | null
   citation: string | null
   rendered_url: string | null
+  /** caminho da imagem do slide no bucket `slide-images` (templates T8/T9). */
+  image_url?: string | null
   /** alt_text para leitores de tela (§7). Persistido junto ao slide. */
   alt_text?: string | null
 }

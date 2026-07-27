@@ -52,7 +52,7 @@ function collectStyles(node: unknown): CSSProperties[] {
 }
 
 const AMBER_TOKENS: string[] = [color.amber, color.amberHi, color.amberDeep, color.amberBurnt]
-const ALL: TemplateId[] = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
+const ALL: TemplateId[] = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9']
 
 describe('§4 — regra do âmbar via amberFor', () => {
   it('nenhum template com fundo paper usa âmbar puro #FD8902', () => {

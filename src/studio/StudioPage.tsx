@@ -3,13 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useStudio } from '@/lib/store'
 import { loadBrandFonts } from '@/lib/fonts'
 import { checkBodyFit, areFontsReady, BODY_MAX_CHARS_PER_LINE } from '@/lib/measure'
-import { invokeFunction } from '@/lib/supabase'
+import { invokeFunction, supabase } from '@/lib/supabase'
 import { CONTENT } from '@/templates/geometry'
 import { TYPE } from '@/brand/tokens'
-import type { TemplateId } from '@/lib/types'
+import type { Slide, TemplateId } from '@/lib/types'
 import CanvasPreview from './CanvasPreview'
 
-const TEMPLATES: TemplateId[] = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
+const TEMPLATES: TemplateId[] = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9']
+const IMAGE_TEMPLATES: TemplateId[] = ['T8', 'T9']
 
 export default function StudioPage() {
   const { postId } = useParams()
@@ -129,6 +130,10 @@ export default function StudioPage() {
               </div>
             )}
 
+            {IMAGE_TEMPLATES.includes(selected.template) && (
+              <ImageUpload slide={selected} onChange={(patch) => commit(selected.id, patch)} />
+            )}
+
             <Field key={`eyebrow-${selected.id}`} label="Rótulo" value={selected.eyebrow ?? ''} onChange={(v) => commit(selected.id, { eyebrow: v })} />
             <Field key={`title-${selected.id}`} label="Título" value={selected.title ?? ''} onChange={(v) => commit(selected.id, { title: v })} />
 
@@ -168,6 +173,47 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
         className="mt-2 w-full bg-transparent border border-grey-dark rounded px-3 py-2 focus:border-amber outline-none"
       />
     </label>
+  )
+}
+
+// Upload de imagem do slide (templates T8/T9). Sobe ao bucket slide-images e
+// grava o caminho em image_url; o preview resolve a URL assinada.
+function ImageUpload({ slide, onChange }: { slide: Slide; onChange: (patch: Partial<Slide>) => void }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setBusy(true)
+    setError(null)
+    const ext = (file.name.split('.').pop() || 'png').toLowerCase()
+    const path = `${slide.post_id}/${slide.id}-${Date.now()}.${ext}`
+    const { error: upErr } = await supabase.storage.from('slide-images').upload(path, file, { upsert: true, contentType: file.type })
+    setBusy(false)
+    if (upErr) {
+      setError(upErr.message)
+      return
+    }
+    onChange({ image_url: path })
+  }
+
+  return (
+    <div>
+      <span className="text-xs uppercase tracking-widest text-grey">Imagem</span>
+      <div className="mt-2 flex items-center gap-3">
+        <label className="border border-grey-dark rounded px-3 py-2 text-sm cursor-pointer hover:border-amber transition-colors">
+          {busy ? 'Enviando…' : slide.image_url ? 'Trocar imagem' : 'Escolher imagem'}
+          <input type="file" accept="image/*" onChange={onFile} className="hidden" disabled={busy} />
+        </label>
+        {slide.image_url && (
+          <button onClick={() => onChange({ image_url: null })} className="text-sm text-grey hover:text-red-300 transition-colors">
+            Remover
+          </button>
+        )}
+      </div>
+      {error && <p className="text-red-400 text-sm mt-1">{error}</p>}
+    </div>
   )
 }
 

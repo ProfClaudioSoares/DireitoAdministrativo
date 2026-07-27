@@ -82,12 +82,26 @@ Deno.serve(async (req) => {
 
     const assets: BrandAssets = { monogramAmber, monogramDark, wordmark }
 
+    // Imagem do slide (T8/T9): baixa do bucket slide-images e embute como data URI
+    // (o satori não busca URL remota).
+    let image: string | null = null
+    if (slide.image_url) {
+      const { data: img } = await supabase.storage.from('slide-images').download(slide.image_url as string)
+      if (img) {
+        const bytes = new Uint8Array(await img.arrayBuffer())
+        let binary = ''
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+        const mime = img.type || 'image/png'
+        image = `data:${mime};base64,${btoa(binary)}`
+      }
+    }
+
     const element = React.createElement(SlideRenderer, {
       template: slide.template,
       index: slide.position,
       total,
       assets,
-      content: { eyebrow: slide.eyebrow, title: slide.title, body: slide.body, citation: slide.citation },
+      content: { eyebrow: slide.eyebrow, title: slide.title, body: slide.body, citation: slide.citation, image },
     })
 
     const svg = await satori(element as React.ReactElement, {

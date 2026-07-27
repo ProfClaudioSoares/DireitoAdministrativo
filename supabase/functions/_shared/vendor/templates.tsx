@@ -413,6 +413,77 @@ function T7({ content, index, total, assets }: TemplateProps): JSX.Element {
   )
 }
 
+// Área de imagem (ou placeholder quando ainda não há imagem).
+function ImageArea({ src, height }: { src?: string | null; height: number }): JSX.Element {
+  if (src) {
+    // eslint-disable-next-line jsx-a11y/alt-text
+    return <img src={src} width={CONTENT.width} height={height} style={{ width: CONTENT.width, height, objectFit: 'cover', borderRadius: 10 }} />
+  }
+  return (
+    <div
+      style={{
+        width: CONTENT.width,
+        height,
+        borderRadius: 10,
+        border: `2px solid ${color.grey}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div style={{ fontFamily: 'Jost', fontWeight: 500, fontSize: TYPE.label, letterSpacing: 4, textTransform: 'uppercase', color: color.grey }}>
+        Adicione uma imagem
+      </div>
+    </div>
+  )
+}
+
+function ImageTextBlock({ content }: { content: SlideContent }): JSX.Element {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', width: CONTENT.width, gap: 18 }}>
+      {content.eyebrow && (
+        <div style={{ fontFamily: 'Jost', fontWeight: 500, fontSize: TYPE.label, letterSpacing: 4, textTransform: 'uppercase', color: color.grey, width: CONTENT.width, lineHeight: TYPE.lineHeight }}>
+          {content.eyebrow}
+        </div>
+      )}
+      {content.title && (
+        <div style={{ fontFamily: 'Playfair Display', fontWeight: 500, fontSize: TYPE.subtitle, color: color.paper, width: CONTENT.width, lineHeight: TYPE.lineHeight }}>
+          {content.title}
+        </div>
+      )}
+      {content.body && (
+        <div style={{ fontFamily: 'Jost', fontWeight: 300, fontSize: TYPE.body, color: color.grey, width: CONTENT.width, lineHeight: TYPE.lineHeight, whiteSpace: 'pre-wrap' }}>
+          {content.body}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── T8 · Imagem acima + texto abaixo (ink) ────────────────────────────────────
+function T8({ content, index, total }: TemplateProps): JSX.Element {
+  return (
+    <Frame background={color.ink} index={index} total={total}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 44 }}>
+        <ImageArea src={content.image} height={600} />
+        <ImageTextBlock content={content} />
+      </div>
+    </Frame>
+  )
+}
+
+// ── T9 · Texto acima + imagem abaixo (ink) — outra disposição ─────────────────
+function T9({ content, index, total }: TemplateProps): JSX.Element {
+  return (
+    <Frame background={color.ink} index={index} total={total}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between', gap: 44 }}>
+        <ImageTextBlock content={content} />
+        <ImageArea src={content.image} height={560} />
+      </div>
+    </Frame>
+  )
+}
+
 export const TEMPLATE_META: Record<TemplateId, TemplateMeta> = {
   T1: { id: 'T1', name: 'Capa-tese', background: color.ink },
   T2: { id: 'T2', name: 'Conteúdo', background: color.paper },
@@ -421,6 +492,8 @@ export const TEMPLATE_META: Record<TemplateId, TemplateMeta> = {
   T5: { id: 'T5', name: 'Fecho', background: color.ink },
   T6: { id: 'T6', name: 'Destaque âmbar', background: color.amber },
   T7: { id: 'T7', name: 'Numeral claro', background: color.white },
+  T8: { id: 'T8', name: 'Imagem acima', background: color.ink },
+  T9: { id: 'T9', name: 'Imagem abaixo', background: color.ink },
 }
 
 const REGISTRY: Record<TemplateId, (p: TemplateProps) => JSX.Element> = {
@@ -431,6 +504,8 @@ const REGISTRY: Record<TemplateId, (p: TemplateProps) => JSX.Element> = {
   T5,
   T6,
   T7,
+  T8,
+  T9,
 }
 
 /** Ponto único de render de um slide, por id de template. Usado no preview e no satori. */

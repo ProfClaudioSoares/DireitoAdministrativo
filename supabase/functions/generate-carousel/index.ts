@@ -16,10 +16,15 @@ interface GenInput {
 }
 
 async function callModel(userText: string): Promise<string> {
+  const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY não configurada no servidor (Supabase → Edge Functions → Secrets).')
+  }
+  console.log(`generate-carousel: chamando ${GENERATE_MODEL}`)
   const res = await fetch(ANTHROPIC_URL, {
     method: 'POST',
     headers: {
-      'x-api-key': Deno.env.get('ANTHROPIC_API_KEY')!,
+      'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
       'Content-Type': 'application/json',
     },
@@ -32,7 +37,9 @@ async function callModel(userText: string): Promise<string> {
   })
   if (!res.ok) {
     const detail = await res.text()
-    throw new Error(`Falha na API da Anthropic (${res.status}): ${detail.slice(0, 300)}`)
+    const msg = `Falha na API da Anthropic (${res.status}): ${detail.slice(0, 300)}`
+    console.error(msg)
+    throw new Error(msg)
   }
   const data = await res.json()
   const text = data?.content?.[0]?.text
@@ -80,6 +87,7 @@ Deno.serve(async (req) => {
     try {
       raw = await callModel(attempt === 0 ? userText : `${userText}\n\nERRO DE VALIDAÇÃO ANTERIOR: ${lastErr}\nCorrija e responda apenas o JSON.`)
     } catch (e) {
+      console.error('generate-carousel erro:', (e as Error).message)
       return fail((e as Error).message, 502)
     }
     const result = generatedCarouselSchema.safeParse(safeJson(stripCodeFences(raw)))

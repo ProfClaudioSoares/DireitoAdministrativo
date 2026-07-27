@@ -1,0 +1,21 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+coverage
+supabase/.temp
+# Fontes .ttf estáticas e PNGs de marca são binários da marca; mantidos fora do
+# versionamento por padrão. Ver src/brand/fonts/README.md e src/brand/assets/README.md.
+src/brand/fonts/*.ttf
+
+*.tsbuildinfo
+
+# Binários da marca colocados localmente para upload ao bucket
+brand-assets/
+
+# Build de artifact (single-file) — não versionar
+dist-artifact/

@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* As fontes da marca NÃO são declaradas aqui com @font-face estático. Elas são
+   baixadas do bucket `brand` do Supabase e injetadas em runtime via CSS Font
+   Loading API (FontFace) em src/lib/fonts.ts — as MESMAS bytes que alimentam a
+   medição (opentype.js) e, no servidor, o satori. Assim não versionamos binários
+   e o deploy fica fiel. */
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: #050505;
+  color: #F0EDE6;
+  font-family: 'Jost', system-ui, sans-serif;
+}

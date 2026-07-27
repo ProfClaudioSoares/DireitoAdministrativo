@@ -47,11 +47,11 @@ brand, lib) e `supabase/` (migrations + functions). O import map em
    `VITE_SUPABASE_ANON_KEY` (somente valores públicos).
 4. **Banco:** aplique as migrações de `supabase/migrations/` (`supabase db push`).
 5. **Segredos das functions:**
-   `supabase secrets set ANTHROPIC_API_KEY=… MIXPOST_BASE_URL=… MIXPOST_WORKSPACE_UUID=… MIXPOST_TOKEN=… MIXPOST_ACCOUNT_ID=…`
-   (a chave da IA e o token do Mixpost vivem só aqui, nunca no cliente).
+   `supabase secrets set ANTHROPIC_API_KEY=… IG_USER_ID=… META_APP_ID=… META_APP_SECRET=… META_LONG_LIVED_TOKEN=…`
+   (a chave da IA e os tokens vivem só aqui, nunca no cliente; ver `docs/meta-setup.md`).
 6. **Vault (cron):** crie os segredos `service_role_key` e `functions_base_url`
    (ver cabeçalho de `0004_cron.sql`).
-7. **Deploy functions:** `supabase functions deploy generate-carousel render-slides compliance-review mixpost-schedule`
+7. **Deploy functions:** `supabase functions deploy generate-carousel render-slides compliance-review publish-due-posts mixpost-schedule`
 8. **Dev:** `npm run dev` (exige `.env` configurado — sem ele, o app mostra a tela “configure o Supabase”).
 
 ### Scripts
@@ -122,25 +122,24 @@ Variables do projeto no Vercel** (o `vercel pull` as busca) — não precisam ir
 GitHub. Os secrets das Edge Functions e os segredos do Vault (cron) são definidos
 uma vez, fora do CI (via `deploy.sh` ou manualmente).
 
-## Publicação via Mixpost
+## Publicação (padrão: Meta Graph API — grátis, um usuário)
 
-O **Mixpost** é o agendador/publicador: ao agendar um post aprovado, a Edge
-Function `mixpost-schedule` sobe os PNGs do bucket `renders` para a mídia do
-Mixpost e cria um post agendado na conta do Instagram conectada lá — o Mixpost
-publica no horário. Isso dispensa o App Review + PPA da Meta.
+Selecionada por `VITE_PUBLISH_PROVIDER` (`meta` padrão, ou `mixpost`).
 
-**Pré-requisitos (fora do app):**
-1. Instância do Mixpost (self-hosted ou hospedada) com API habilitada.
-2. Conta do Instagram conectada dentro do Mixpost.
-3. Token de API + UUID do workspace (menu ⋯ de uma conta social) + id da conta.
-4. Secrets no Supabase: `MIXPOST_BASE_URL`, `MIXPOST_CORE_PATH` (padrão `mixpost`),
-   `MIXPOST_WORKSPACE_UUID`, `MIXPOST_TOKEN`, `MIXPOST_ACCOUNT_ID`.
+### Meta Graph API (padrão) — `docs/meta-setup.md`
+Gratuita e **sem App Review para a sua própria conta** (app em modo de
+desenvolvimento + seu Instagram como admin/testador). Ao agendar, o post fica
+`scheduled` e o worker **`publish-due-posts`** (pg_cron, a cada 5 min) publica o
+carrossel no horário, de forma **idempotente** (ids de container gravados antes de
+cada passo → retentativa não duplica). Secrets: `IG_USER_ID`, `META_APP_ID`,
+`META_APP_SECRET`, `META_LONG_LIVED_TOKEN`. App Review só é preciso para publicar
+em contas de terceiros.
 
-A idempotência é garantida por `mixpost_post_uuid` / `mixpost_media_ids` em `posts`
-(migração `0006_mixpost.sql`): retentativa reaproveita mídia e post, sem duplicar.
-
-> Alternativa (opcional): publicação direta via **Meta Graph API** segue disponível
-> em `publish-due-posts` (requer App Review + PPA). O Mixpost é o caminho padrão.
+### Mixpost (alternativa) — `docs/mixpost-setup.md`
+Com `VITE_PUBLISH_PROVIDER=mixpost`, ao agendar, a Edge Function
+`mixpost-schedule` sobe os PNGs e cria o post agendado no Mixpost, que publica no
+horário. Idempotência por `mixpost_post_uuid` / `mixpost_media_ids` (migração
+`0006`). ⚠ A API REST do Mixpost é recurso do **Pro** (o Lite não expõe `/api`).
 
 ## Fora de escopo na v1 (§11)
 

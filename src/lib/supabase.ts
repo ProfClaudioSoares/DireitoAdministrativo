@@ -29,6 +29,17 @@ export const supabase: SupabaseClient = createClient(
 /** Invoca uma Edge Function autenticada. As chaves de IA/Mixpost vivem só no servidor. */
 export async function invokeFunction<T>(name: string, body: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke<T>(name, { body })
-  if (error) throw error
+  if (error) {
+    // supabase-js devolve mensagem genérica ("non-2xx"); extrai o {error} do corpo.
+    let message = error.message
+    try {
+      const ctx = (error as { context?: Response }).context
+      const parsed = ctx && typeof ctx.json === 'function' ? await ctx.json() : null
+      if (parsed?.error) message = String(parsed.error)
+    } catch {
+      /* mantém a mensagem genérica */
+    }
+    throw new Error(message)
+  }
   return data as T
 }

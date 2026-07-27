@@ -1,5 +1,6 @@
 {
-  "//": "Import map das Edge Functions. O alias @/ aponta para src/ do app para que os módulos ÚNICOS (templates, measure, schema) sejam importados sem duplicação (§3). React e satori resolvem via esm.sh.",
+  "//": "Import map das Edge Functions. O alias @/ aponta para src/ do app para que os módulos ÚNICOS (templates, measure, schema) sejam importados sem duplicação (§3). sloppy-imports resolve extensão/índice (schema.ts, templates/index.tsx) como o Vite. React e satori resolvem via esm.sh.",
+  "unstable": ["sloppy-imports"],
   "imports": {
     "@/": "../../src/",
     "react": "https://esm.sh/react@18.3.1",

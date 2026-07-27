@@ -38,9 +38,13 @@ brand, lib) e `supabase/` (migrations + functions). O import map em
 
 ## Setup
 
-> **Sem CLI?** Há um guia 100% pelo painel web do Supabase em
-> [`docs/setup-web.md`](docs/setup-web.md) (Plano B). Com token, o
-> `scripts/bootstrap-supabase.sh` cria o projeto e migra num comando.
+> **Como criar o projeto Supabase:**
+> - **Com token, sem CLI local:** Actions → **Bootstrap Supabase** (workflow
+>   manual `.github/workflows/bootstrap-supabase.yml`). Adicione o secret do repo
+>   `SUPABASE_ACCESS_TOKEN`, rode informando o `org_id`, e o GitHub cria o
+>   projeto + migra + deploya as functions.
+> - **Com token, localmente:** `scripts/bootstrap-supabase.sh` (um comando).
+> - **Sem token, clicável:** guia pelo painel web em [`docs/setup-web.md`](docs/setup-web.md).
 
 1. **Instalar:** `npm install`
 2. **Fontes/assets da marca:** suba os quatro `.ttf` (ver `src/brand/fonts/README.md`)

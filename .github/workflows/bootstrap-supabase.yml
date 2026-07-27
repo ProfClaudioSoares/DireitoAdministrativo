@@ -1,0 +1,84 @@
+name: Bootstrap Supabase
+
+# Cria o projeto Supabase, aplica as migrações e faz deploy das Edge Functions —
+# rodando nos runners do GitHub (rede aberta), com o SEU token guardado como
+# secret do repositório. Disparo MANUAL (Actions → Bootstrap Supabase → Run).
+#
+# Pré-requisito: repo secret SUPABASE_ACCESS_TOKEN
+#   (https://supabase.com/dashboard/account/tokens)
+# Para descobrir o org id: rode uma vez sem saber e veja o erro, ou use
+#   `npx supabase orgs list` em qualquer terminal com o token.
+
+on:
+  workflow_dispatch:
+    inputs:
+      org_id:
+        description: "Supabase org id"
+        required: true
+      project_name:
+        description: "Nome do projeto"
+        required: true
+        default: "estudio-conteudo-cs"
+      region:
+        description: "Região (ex.: sa-east-1 = São Paulo)"
+        required: true
+        default: "sa-east-1"
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Verificar token
+        run: '[ -n "$SUPABASE_ACCESS_TOKEN" ] || { echo "Defina o secret do repo SUPABASE_ACCESS_TOKEN."; exit 1; }'
+
+      - name: Criar projeto, migrar e deployar functions
+        run: |
+          set -euo pipefail
+          PW="$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 28)"
+          echo "::add-mask::$PW"   # não vaza a senha no log
+
+          echo "▸ Criando projeto '${{ inputs.project_name }}' em '${{ inputs.region }}'…"
+          supabase projects create "${{ inputs.project_name }}" \
+            --org-id "${{ inputs.org_id }}" \
+            --db-password "$PW" \
+            --region "${{ inputs.region }}"
+
+          echo "▸ Descobrindo o ref…"
+          REF="$(supabase projects list -o json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const a=JSON.parse(s);const p=a.find(x=>x.name===process.argv[1]);process.stdout.write((p&&(p.id||p.ref))||"")}catch{process.exit(0)}})' "${{ inputs.project_name }}")"
+          [ -n "$REF" ] || { echo "Não consegui obter o ref. Rode: npx supabase projects list"; exit 1; }
+          echo "REF=$REF"
+
+          echo "▸ Linkando e aplicando migrações…"
+          supabase link --project-ref "$REF" --password "$PW"
+          supabase db push --password "$PW"
+
+          echo "▸ Deploy das Edge Functions…"
+          supabase functions deploy \
+            generate-carousel render-slides compliance-review publish-due-posts mixpost-schedule \
+            --project-ref "$REF"
+
+          echo ""
+          echo "==================================================================="
+          echo "✔ Projeto criado: https://$REF.supabase.co"
+          echo "Próximos passos (uma vez):"
+          echo "  • anon key + service_role: Dashboard → Project Settings → API"
+          echo "  • Extensões: habilite pg_cron, pg_net, supabase_vault (Database → Extensions),"
+          echo "    depois rode de novo o db push se o 0004_cron falhar por extensão ausente."
+          echo "  • Vault (SQL Editor):"
+          echo "      select vault.create_secret('<service_role_key>','service_role_key');"
+          echo "      select vault.create_secret('https://$REF.functions.supabase.co','functions_base_url');"
+          echo "  • Secrets das functions: supabase secrets set ANTHROPIC_API_KEY=… IG_USER_ID=… META_* --project-ref $REF"
+          echo "  • Vercel: VITE_SUPABASE_URL=https://$REF.supabase.co ; VITE_SUPABASE_ANON_KEY=<anon> ; VITE_PUBLISH_PROVIDER=meta"
+          echo "  • A senha do banco foi gerada e usada aqui (mascarada). Se precisar dela,"
+          echo "    redefina em Settings → Database → Reset database password."
+          echo "==================================================================="

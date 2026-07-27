@@ -18,6 +18,7 @@ export default function StudioPage() {
   const { post, slides, load, selectedSlideId, select, updateSlide, loading } = useStudio()
   const [fontsReady, setFontsReady] = useState(areFontsReady())
   const [running, setRunning] = useState(false)
+  const [rendering, setRendering] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
 
   // Salva um patch no slide selecionado e mostra o erro se o banco recusar.
@@ -56,13 +57,24 @@ export default function StudioPage() {
 
   async function renderAll() {
     if (!postId) return
-    // Orquestra um render por invocação (§9), com barra de progresso implícita.
-    let next: number | null = slides[0]?.position ?? null
-    while (next !== null) {
-      const res: { next: number | null } = await invokeFunction('render-slides', { post_id: postId, position: next })
-      next = res.next
+    setErr(null)
+    setRendering('Iniciando…')
+    try {
+      // Orquestra um render por invocação (§9), com progresso visível.
+      let next: number | null = slides[0]?.position ?? null
+      let done = 0
+      while (next !== null) {
+        setRendering(`Renderizando slide ${done + 1} de ${slides.length}…`)
+        const res: { next: number | null } = await invokeFunction('render-slides', { post_id: postId, position: next })
+        next = res.next
+        done++
+      }
+      setRendering(null)
+      await load(postId)
+    } catch (e) {
+      setRendering(null)
+      setErr((e as Error).message)
     }
-    await load(postId)
   }
 
   if (loading || !post) return <div className="px-6 py-12 text-grey">Carregando…</div>
@@ -142,8 +154,12 @@ export default function StudioPage() {
             <Field key={`citation-${selected.id}`} label="Citação" value={selected.citation ?? ''} onChange={(v) => commit(selected.id, { citation: v })} />
 
             <div className="border-t border-grey-dark/40 pt-4 flex flex-col gap-3">
-              <button onClick={renderAll} className="border border-grey-dark rounded px-4 py-2 hover:border-amber transition-colors">
-                Renderizar imagens
+              <button
+                onClick={renderAll}
+                disabled={!!rendering}
+                className="border border-grey-dark rounded px-4 py-2 hover:border-amber disabled:opacity-40 transition-colors"
+              >
+                {rendering ?? 'Renderizar imagens'}
               </button>
               <button
                 onClick={runCompliance}

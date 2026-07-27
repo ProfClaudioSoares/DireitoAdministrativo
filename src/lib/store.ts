@@ -31,12 +31,15 @@ export const useStudio = create<StudioState>((set, get) => ({
       supabase.from('citations').select('*').eq('post_id', postId),
       supabase.from('compliance_flags').select('*').eq('post_id', postId),
     ])
+    const list = (slides as Slide[]) ?? []
+    const current = get().selectedSlideId
     set({
       post: post as Post | null,
-      slides: (slides as Slide[]) ?? [],
+      slides: list,
       citations: (citations as Citation[]) ?? [],
       flags: (flags as ComplianceFlag[]) ?? [],
-      selectedSlideId: (slides as Slide[])?.[0]?.id ?? null,
+      // preserva a seleção atual se o slide ainda existe; senão, o primeiro.
+      selectedSlideId: current && list.some((s) => s.id === current) ? current : (list[0]?.id ?? null),
       loading: false,
     })
   },
@@ -47,10 +50,14 @@ export const useStudio = create<StudioState>((set, get) => ({
 
   async updateSlide(slideId, patch) {
     const { data } = await supabase.from('slides').update(patch).eq('id', slideId).select().single()
-    if (data) {
-      set({ slides: get().slides.map((s) => (s.id === slideId ? (data as Slide) : s)) })
-      // O trigger de invalidação pode ter rebaixado o post — recarrega para refletir.
-      if (get().post) void get().load(get().post!.id)
+    if (!data) return
+    // Atualiza só o slide alterado — NÃO recarrega tudo (isso resetava a seleção).
+    set({ slides: get().slides.map((s) => (s.id === slideId ? (data as Slide) : s)) })
+    // Reflete um possível rebaixamento de status pelo trigger, sem mexer na seleção.
+    const pid = get().post?.id
+    if (pid) {
+      const { data: post } = await supabase.from('posts').select('*').eq('id', pid).single()
+      if (post) set({ post: post as Post })
     }
   },
 

@@ -3,7 +3,7 @@
 import { corsHeaders, fail, json } from '../_shared/cors.ts'
 import { userClient } from '../_shared/client.ts'
 import { GENERATE_MODEL, GENERATE_SYSTEM_PROMPT, CAPTION_FORMULA } from '../_shared/prompt.ts'
-import { generatedCarouselSchema, stripCodeFences } from '@/lib/schema.ts'
+import { generatedCarouselSchema, stripCodeFences } from '../_shared/vendor/schema.ts'
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
 const PILLARS = ['artigo_semana', 'erro_certame', 'decisao_comentada', 'pergunta_licitante', 'bastidores']

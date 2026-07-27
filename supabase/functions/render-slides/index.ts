@@ -6,9 +6,9 @@ import satori from 'satori'
 import { initWasm, Resvg } from '@resvg/resvg-wasm'
 import { corsHeaders, fail, json } from '../_shared/cors.ts'
 import { userClient } from '../_shared/client.ts'
-import { SlideRenderer } from '@/templates/index.tsx'
-import { SLIDE_H, SLIDE_W } from '@/templates/geometry.ts'
-import type { BrandAssets } from '@/templates/types.ts'
+import { SlideRenderer } from '../_shared/vendor/templates.tsx'
+import { SLIDE_H, SLIDE_W } from '../_shared/vendor/geometry.ts'
+import type { BrandAssets } from '../_shared/vendor/types.ts'
 
 // ── Estado quente entre invocações (mesmo isolate) ──────────────────────────
 let wasmReady = false

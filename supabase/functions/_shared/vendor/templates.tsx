@@ -1,3 +1,6 @@
+// ⚠ ARQUIVO GERADO por scripts/sync-functions-shared.mjs — NÃO EDITE À MÃO.
+// Fonte única: src/templates/index.tsx. Rode o script após editar o original.
+
 // ─────────────────────────────────────────────────────────────────────────────
 // OS CINCO TEMPLATES — código ÚNICO (§3, §4). O MESMO componente alimenta:
 //   • o preview do canvas (React DOM) e
@@ -10,8 +13,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { CSSProperties, ReactNode } from 'react'
-import { color, amberFor, TYPE, type Background } from '@/brand/tokens.ts'
-import type { TemplateId } from '@/lib/types.ts'
+import { color, amberFor, TYPE, type Background } from './tokens.ts'
+import type { TemplateId } from './app-types.ts'
 import { Column } from './Column.tsx'
 import { CONTENT, SLIDE_H, SLIDE_W } from './geometry.ts'
 import type { BrandAssets, SlideContent, TemplateMeta, TemplateProps } from './types.ts'

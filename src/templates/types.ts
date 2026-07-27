@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
-import type { Background } from '@/brand/tokens'
-import type { TemplateId } from '@/lib/types'
+import type { Background } from '@/brand/tokens.ts'
+import type { TemplateId } from '@/lib/types.ts'
 
 // Objetos de estilo inline TIPADOS (§4-A regra 3). Nada de Tailwind aqui —
 // isto vira PNG. Apenas propriedades dentro do contrato de subconjunto do satori.

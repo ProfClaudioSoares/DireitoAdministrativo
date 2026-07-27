@@ -1,5 +1,5 @@
 // Geometria derivada dos tokens (§4). Uma vez, compartilhada por todos os templates.
-import { FORMAT } from '@/brand/tokens'
+import { FORMAT } from '@/brand/tokens.ts'
 
 export const SLIDE_W = FORMAT.width // 1080
 export const SLIDE_H = FORMAT.height // 1350

@@ -7,8 +7,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { CSSProperties } from 'react'
-import { amberFor, type Background } from '@/brand/tokens'
-import { COLUMN } from './geometry'
+import { amberFor, type Background } from '@/brand/tokens.ts'
+import { COLUMN } from './geometry.ts'
 
 const W = COLUMN.width
 

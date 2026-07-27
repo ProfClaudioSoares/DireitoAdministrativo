@@ -10,11 +10,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { CSSProperties } from 'react'
-import { color, amberFor, TYPE, type Background } from '@/brand/tokens'
-import type { TemplateId } from '@/lib/types'
-import { Column } from './Column'
-import { CONTENT, SLIDE_H, SLIDE_W } from './geometry'
-import type { BrandAssets, SlideContent, TemplateMeta, TemplateProps } from './types'
+import { color, amberFor, TYPE, type Background } from '@/brand/tokens.ts'
+import type { TemplateId } from '@/lib/types.ts'
+import { Column } from './Column.tsx'
+import { CONTENT, SLIDE_H, SLIDE_W } from './geometry.ts'
+import type { BrandAssets, SlideContent, TemplateMeta, TemplateProps } from './types.ts'
 
 // Assinatura fixa do titular (§7).
 const OAB = 'OAB/RS 49.924'

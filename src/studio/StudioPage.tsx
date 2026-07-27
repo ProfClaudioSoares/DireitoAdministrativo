@@ -17,6 +17,17 @@ export default function StudioPage() {
   const { post, slides, load, selectedSlideId, select, updateSlide, loading } = useStudio()
   const [fontsReady, setFontsReady] = useState(areFontsReady())
   const [running, setRunning] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  // Salva um patch no slide selecionado e mostra o erro se o banco recusar.
+  async function commit(slideId: string, patch: Parameters<typeof updateSlide>[1]) {
+    setErr(null)
+    try {
+      await updateSlide(slideId, patch)
+    } catch (e) {
+      setErr((e as Error).message)
+    }
+  }
 
   useEffect(() => {
     if (postId) void load(postId)
@@ -101,7 +112,7 @@ export default function StudioPage() {
                 {TEMPLATES.map((t) => (
                   <button
                     key={t}
-                    onClick={() => updateSlide(selected.id, { template: t })}
+                    onClick={() => commit(selected.id, { template: t })}
                     className={`px-3 py-1 rounded border text-sm ${
                       selected.template === t ? 'border-amber text-amber' : 'border-grey-dark text-grey'
                     }`}
@@ -112,12 +123,18 @@ export default function StudioPage() {
               </div>
             </div>
 
-            <Field key={`eyebrow-${selected.id}`} label="Rótulo" value={selected.eyebrow ?? ''} onChange={(v) => updateSlide(selected.id, { eyebrow: v })} />
-            <Field key={`title-${selected.id}`} label="Título" value={selected.title ?? ''} onChange={(v) => updateSlide(selected.id, { title: v })} />
+            {err && (
+              <div className="border border-red-600/60 bg-red-600/10 text-red-300 rounded px-3 py-2 text-sm">
+                Não foi possível salvar: {err}
+              </div>
+            )}
 
-            <BodyField key={`body-${selected.id}`} value={selected.body ?? ''} fontsReady={fontsReady} onChange={(v) => updateSlide(selected.id, { body: v })} />
+            <Field key={`eyebrow-${selected.id}`} label="Rótulo" value={selected.eyebrow ?? ''} onChange={(v) => commit(selected.id, { eyebrow: v })} />
+            <Field key={`title-${selected.id}`} label="Título" value={selected.title ?? ''} onChange={(v) => commit(selected.id, { title: v })} />
 
-            <Field key={`citation-${selected.id}`} label="Citação" value={selected.citation ?? ''} onChange={(v) => updateSlide(selected.id, { citation: v })} />
+            <BodyField key={`body-${selected.id}`} value={selected.body ?? ''} fontsReady={fontsReady} onChange={(v) => commit(selected.id, { body: v })} />
+
+            <Field key={`citation-${selected.id}`} label="Citação" value={selected.citation ?? ''} onChange={(v) => commit(selected.id, { citation: v })} />
 
             <div className="border-t border-grey-dark/40 pt-4 flex flex-col gap-3">
               <button onClick={renderAll} className="border border-grey-dark rounded px-4 py-2 hover:border-amber transition-colors">

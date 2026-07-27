@@ -49,7 +49,8 @@ export const useStudio = create<StudioState>((set, get) => ({
   },
 
   async updateSlide(slideId, patch) {
-    const { data } = await supabase.from('slides').update(patch).eq('id', slideId).select().single()
+    const { data, error } = await supabase.from('slides').update(patch).eq('id', slideId).select().single()
+    if (error) throw new Error(error.message)
     if (!data) return
     // Atualiza só o slide alterado — NÃO recarrega tudo (isso resetava a seleção).
     set({ slides: get().slides.map((s) => (s.id === slideId ? (data as Slide) : s)) })

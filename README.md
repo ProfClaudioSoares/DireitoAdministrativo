@@ -38,6 +38,10 @@ brand, lib) e `supabase/` (migrations + functions). O import map em
 
 ## Setup
 
+> **Sem CLI?** Há um guia 100% pelo painel web do Supabase em
+> [`docs/setup-web.md`](docs/setup-web.md) (Plano B). Com token, o
+> `scripts/bootstrap-supabase.sh` cria o projeto e migra num comando.
+
 1. **Instalar:** `npm install`
 2. **Fontes/assets da marca:** suba os quatro `.ttf` (ver `src/brand/fonts/README.md`)
    e os três PNGs (ver `src/brand/assets/README.md`) para o bucket `brand` do

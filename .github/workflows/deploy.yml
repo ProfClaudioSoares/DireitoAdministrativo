@@ -49,7 +49,7 @@ jobs:
       - name: Deploy Edge Functions
         run: >
           supabase functions deploy
-          generate-carousel render-slides compliance-review publish-due-posts
+          generate-carousel render-slides compliance-review mixpost-schedule publish-due-posts
           --project-ref "$SUPABASE_PROJECT_REF"
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}

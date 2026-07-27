@@ -46,11 +46,13 @@ brand, lib) e `supabase/` (migrations + functions). O import map em
 3. **Env:** copie `.env.example` para `.env` e preencha `VITE_SUPABASE_URL` /
    `VITE_SUPABASE_ANON_KEY` (somente valores públicos).
 4. **Banco:** aplique as migrações de `supabase/migrations/` (`supabase db push`).
-5. **Segredos das functions:** `supabase secrets set ANTHROPIC_API_KEY=… IG_USER_ID=… META_LONG_LIVED_TOKEN=…`
+5. **Segredos das functions:**
+   `supabase secrets set ANTHROPIC_API_KEY=… MIXPOST_BASE_URL=… MIXPOST_WORKSPACE_UUID=… MIXPOST_TOKEN=… MIXPOST_ACCOUNT_ID=…`
+   (a chave da IA e o token do Mixpost vivem só aqui, nunca no cliente).
 6. **Vault (cron):** crie os segredos `service_role_key` e `functions_base_url`
    (ver cabeçalho de `0004_cron.sql`).
-7. **Deploy functions:** `supabase functions deploy generate-carousel render-slides compliance-review publish-due-posts`
-8. **Dev:** `npm run dev`
+7. **Deploy functions:** `supabase functions deploy generate-carousel render-slides compliance-review mixpost-schedule`
+8. **Dev:** `npm run dev` (exige `.env` configurado — sem ele, o app mostra a tela “configure o Supabase”).
 
 ### Scripts
 
@@ -120,12 +122,25 @@ Variables do projeto no Vercel** (o `vercel pull` as busca) — não precisam ir
 GitHub. Os secrets das Edge Functions e os segredos do Vault (cron) são definidos
 uma vez, fora do CI (via `deploy.sh` ou manualmente).
 
-## Pré-requisitos externos (o app não resolve sozinho — §10)
+## Publicação via Mixpost
 
-Conta Instagram profissional ligada a uma Página, app no Meta for Developers,
-permissão `instagram_business_content_publish` aprovada em App Review (2–4 semanas)
-e, se exigida, a **Page Publishing Authorization (PPA)** concluída antes de
-qualquer publicação por API.
+O **Mixpost** é o agendador/publicador: ao agendar um post aprovado, a Edge
+Function `mixpost-schedule` sobe os PNGs do bucket `renders` para a mídia do
+Mixpost e cria um post agendado na conta do Instagram conectada lá — o Mixpost
+publica no horário. Isso dispensa o App Review + PPA da Meta.
+
+**Pré-requisitos (fora do app):**
+1. Instância do Mixpost (self-hosted ou hospedada) com API habilitada.
+2. Conta do Instagram conectada dentro do Mixpost.
+3. Token de API + UUID do workspace (menu ⋯ de uma conta social) + id da conta.
+4. Secrets no Supabase: `MIXPOST_BASE_URL`, `MIXPOST_CORE_PATH` (padrão `mixpost`),
+   `MIXPOST_WORKSPACE_UUID`, `MIXPOST_TOKEN`, `MIXPOST_ACCOUNT_ID`.
+
+A idempotência é garantida por `mixpost_post_uuid` / `mixpost_media_ids` em `posts`
+(migração `0006_mixpost.sql`): retentativa reaproveita mídia e post, sem duplicar.
+
+> Alternativa (opcional): publicação direta via **Meta Graph API** segue disponível
+> em `publish-due-posts` (requer App Review + PPA). O Mixpost é o caminho padrão.
 
 ## Fora de escopo na v1 (§11)
 
@@ -140,5 +155,5 @@ LinkedIn/Threads, aprovação por terceiros, biblioteca de mídia.
 4. Bloqueio de oferta de honorários; "menor preço" passa → `_shared/compliance.ts`.
 5. Fidelidade preview↔PNG (≤2 px) → fonte/medição únicas; teste de comparação SVG↔captura é o próximo passo automatizável.
 6. Editar aprovado volta a rascunho → triggers de invalidação.
-7. Publicação automática sem duplicar em falha → `publish-due-posts` (idempotência).
-8. Nenhum token no bundle; chave do cron no Vault → `.env.example`, `_shared/client.ts`, `0004_cron.sql`.
+7. Publicação sem duplicar em falha → `mixpost-schedule` (idempotência por uuid/media ids); Meta em `publish-due-posts`.
+8. Nenhum token no bundle; chaves de IA/Mixpost só no servidor; chave do cron no Vault → `.env.example`, `_shared/client.ts`, `0004_cron.sql`.

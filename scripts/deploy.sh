@@ -66,7 +66,7 @@ deploy_supabase() {
   fi
 
   log "Supabase: deploy das Edge Functions"
-  $sb functions deploy generate-carousel render-slides compliance-review publish-due-posts \
+  $sb functions deploy generate-carousel render-slides compliance-review mixpost-schedule publish-due-posts \
     --project-ref "$SUPABASE_PROJECT_REF"
 
   printf '\033[1;32m✔ Supabase pronto.\033[0m\n'

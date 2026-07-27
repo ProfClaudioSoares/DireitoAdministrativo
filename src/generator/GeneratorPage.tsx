@@ -122,18 +122,18 @@ export default function GeneratorPage() {
           {loading ? 'Gerando…' : 'Gerar carrossel'}
         </button>
 
-        {/* Demo: não chama a IA nem Edge Functions — semeia um exemplo no banco
-            para percorrer edição → conformidade → agenda só com login. */}
+        {/* Exemplo: cria um rascunho pronto no banco, sem chamar a IA — útil para
+            testar o fluxo (renderizar → conformidade → agenda) sem gastar a chamada. */}
         <button
           disabled={demoLoading}
           onClick={onDemo}
           className="border border-grey-dark text-grey px-6 py-3 rounded disabled:opacity-40 hover:border-amber hover:text-paper transition-colors"
         >
-          {demoLoading ? 'Criando…' : 'Criar exemplo (demo)'}
+          {demoLoading ? 'Criando…' : 'Criar exemplo'}
         </button>
       </div>
       <p className="text-xs text-grey/70 mt-3">
-        O exemplo dispensa a chave da IA: gera um carrossel pronto no banco para você testar o fluxo.
+        “Gerar” usa a IA (chave no servidor). “Criar exemplo” insere um rascunho pronto sem IA, para testar o fluxo.
       </p>
 
       {loading && (

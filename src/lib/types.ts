@@ -40,6 +40,8 @@ export interface Post {
   ig_media_id: string | null
   ig_parent_container_id: string | null
   ig_child_container_ids: string[] | null
+  mixpost_post_uuid: string | null
+  mixpost_media_ids: string[] | null
   error_message: string | null
   created_at: string
   updated_at: string

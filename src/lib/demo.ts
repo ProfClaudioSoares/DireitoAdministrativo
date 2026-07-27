@@ -65,9 +65,12 @@ const DEMO: GeneratedCarousel & { slides: (GeneratedCarousel['slides'][number] &
   hashtags: ['#licitacoes', '#lei14133', '#direitoadministrativo'],
 }
 
-const PLACEHOLDER_RENDER = 'demo/placeholder.png'
-
-/** Cria o post de demonstração e retorna o post_id. */
+/**
+ * Cria um post de EXEMPLO no banco real, como rascunho — útil para testar o
+ * fluxo sem gastar a chamada de IA. Nasce em `draft`, sem render e sem
+ * conformidade: o titular roda "Renderizar imagens" e "Rodar conformidade"
+ * normalmente (que criam citações/flags reais e os PNGs de verdade).
+ */
 export async function createDemoPost(): Promise<string> {
   const { data: post, error: postErr } = await supabase
     .from('posts')
@@ -80,7 +83,7 @@ export async function createDemoPost(): Promise<string> {
     })
     .select()
     .single()
-  if (postErr || !post) throw new Error(`Falha ao criar demo: ${postErr?.message}`)
+  if (postErr || !post) throw new Error(`Falha ao criar o exemplo: ${postErr?.message}`)
 
   const slideRows = DEMO.slides.map((s, i) => ({
     post_id: post.id,
@@ -91,32 +94,9 @@ export async function createDemoPost(): Promise<string> {
     body: s.body,
     citation: s.citation,
     alt_text: s.alt_text,
-    // placeholder para o portão de agendamento (rendered_url not null). Substitua
-    // rodando "Renderizar imagens" quando as fontes/assets estiverem no bucket.
-    rendered_url: PLACEHOLDER_RENDER,
   }))
   const { error: slidesErr } = await supabase.from('slides').insert(slideRows)
-  if (slidesErr) throw new Error(`Falha ao criar slides do demo: ${slidesErr.message}`)
-
-  // Conformidade pré-semeada (o que a Camada 1 detectaria), sem Edge Function:
-  //  • a citação do dispositivo BLOQUEIA até ser verificada;
-  //  • "menor preço" é apenas AVISO — vocabulário nativo de licitações (§8).
-  await supabase.from('citations').insert({
-    post_id: post.id,
-    raw_text: 'art. 164 da Lei 14.133/2021',
-    kind: 'dispositivo',
-    text_hash: 'demo', // recomputado para md5 pelo trigger ao verificar
-    verified: false,
-  })
-  await supabase.from('compliance_flags').insert({
-    post_id: post.id,
-    rule: 'termo_ambiguo',
-    layer: 'regex',
-    severity: 'warn',
-    excerpt: '…critério de julgamento menor preço não muda…',
-    rationale: 'Termo nativo de licitações ("menor preço"). Só alerta — o titular decide.',
-    resolved: false,
-  })
+  if (slidesErr) throw new Error(`Falha ao criar os slides do exemplo: ${slidesErr.message}`)
 
   return post.id
 }

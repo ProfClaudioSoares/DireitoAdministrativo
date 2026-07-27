@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, invokeFunction } from '@/lib/supabase'
 import type { Post } from '@/lib/types'
 
 // Agenda simplificada (§6.4): lista de aprovados agendáveis + agendados.
@@ -22,17 +22,20 @@ export default function CalendarPage() {
 
   useEffect(() => {
     void refresh()
-    // Saldo da cota de publicação e status do token (§10) seriam consultados aqui
-    // via uma função server-side; placeholder por ora.
-    setQuota('consulte content_publishing_limit')
+    // O Mixpost é o agendador/publicador; a fila e os limites por rede vivem lá.
+    setQuota('gerenciada pelo Mixpost')
   }, [])
 
   async function schedule(post: Post, whenLocal: string) {
     setError(null)
-    // Só aceita approved (§6.4). O trigger de banco recusa se houver pendência.
+    // Envia ao Mixpost (que publica no horário) e marca como 'scheduled'.
+    // O trigger de banco revalida o portão ao mudar o status.
     const iso = new Date(whenLocal).toISOString()
-    const { error: err } = await supabase.from('posts').update({ status: 'scheduled', scheduled_at: iso }).eq('id', post.id)
-    if (err) setError(err.message)
+    try {
+      await invokeFunction('mixpost-schedule', { post_id: post.id, scheduled_at: iso })
+    } catch (e) {
+      setError((e as Error).message || 'Falha ao agendar no Mixpost.')
+    }
     await refresh()
   }
 

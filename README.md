@@ -36,6 +36,12 @@ brand, lib) e `supabase/` (migrations + functions). O import map em
 `supabase/functions/deno.json` aponta `@/` para `src/`, para que templates,
 `measure` e `schema` sejam código ÚNICO compartilhado (§3), sem duplicação.
 
+## Colocar no ar
+
+Checklist único e ordenado (token → Supabase → Meta → Vercel → teste) em
+[`docs/go-live.md`](docs/go-live.md). Guias detalhados: `docs/setup-web.md`,
+`docs/meta-setup.md`, `docs/mixpost-setup.md`.
+
 ## Setup
 
 > **Como criar o projeto Supabase:**

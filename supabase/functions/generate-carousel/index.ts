@@ -42,8 +42,15 @@ async function callModel(userText: string): Promise<string> {
     throw new Error(msg)
   }
   const data = await res.json()
-  const text = data?.content?.[0]?.text
-  if (typeof text !== 'string') throw new Error('Resposta da IA sem conteúdo de texto.')
+  // Procura o bloco de texto em qualquer posição (pode haver blocos não-texto antes).
+  const blocks = Array.isArray(data?.content) ? data.content : []
+  const textBlock = blocks.find((b: { type?: string; text?: unknown }) => b?.type === 'text' && typeof b?.text === 'string')
+  const text = textBlock?.text ?? (typeof blocks?.[0]?.text === 'string' ? blocks[0].text : undefined)
+  if (typeof text !== 'string') {
+    const dump = JSON.stringify(data).slice(0, 400)
+    console.error('Resposta inesperada da Anthropic:', dump)
+    throw new Error(`Resposta da IA sem bloco de texto. stop_reason=${data?.stop_reason ?? '?'} · ${dump}`)
+  }
   return text
 }
 

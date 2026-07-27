@@ -19,11 +19,13 @@ export default function StudioPage() {
   const [fontsReady, setFontsReady] = useState(areFontsReady())
   const [running, setRunning] = useState(false)
   const [rendering, setRendering] = useState<string | null>(null)
+  const [okMsg, setOkMsg] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
 
   // Salva um patch no slide selecionado e mostra o erro se o banco recusar.
   async function commit(slideId: string, patch: Parameters<typeof updateSlide>[1]) {
     setErr(null)
+    setOkMsg(null) // editar torna um render anterior desatualizado
     try {
       await updateSlide(slideId, patch)
     } catch (e) {
@@ -71,6 +73,7 @@ export default function StudioPage() {
       }
       setRendering(null)
       await load(postId)
+      setOkMsg(`${slides.length} ${slides.length === 1 ? 'imagem renderizada' : 'imagens renderizadas'} ✓`)
     } catch (e) {
       setRendering(null)
       setErr((e as Error).message)
@@ -96,6 +99,12 @@ export default function StudioPage() {
           </div>
         )}
 
+        {okMsg && (
+          <div className="mb-6 border border-green-700/60 bg-green-700/10 text-green-300 rounded px-4 py-3 text-sm">
+            {okMsg} — prontas para conformidade e agendamento.
+          </div>
+        )}
+
         {selected && (
           <div className="flex justify-center mb-8">
             <CanvasPreview slide={selected} total={slides.length} width={480} />
@@ -107,9 +116,17 @@ export default function StudioPage() {
             <button
               key={s.id}
               onClick={() => select(s.id)}
-              className={`w-24 rounded overflow-hidden border ${s.id === selected?.id ? 'border-amber' : 'border-grey-dark'}`}
+              className={`relative w-24 rounded overflow-hidden border ${s.id === selected?.id ? 'border-amber' : 'border-grey-dark'}`}
             >
               <CanvasPreview slide={s} total={slides.length} width={96} />
+              {s.rendered_url && (
+                <span
+                  title="Renderizado"
+                  className="absolute top-1 right-1 bg-green-600 text-white text-[10px] leading-none rounded-full w-4 h-4 flex items-center justify-center"
+                >
+                  ✓
+                </span>
+              )}
             </button>
           ))}
         </div>

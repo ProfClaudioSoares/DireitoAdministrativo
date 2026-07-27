@@ -1,65 +1,92 @@
-# Publicar no Instagram pela Meta Graph API (grátis, um usuário)
+# Publicar no Instagram com **Login do Instagram** (grátis, um usuário)
 
-Caminho **padrão** de publicação do app. A API da Meta é gratuita e, para a
-**sua própria conta**, **não exige App Review**: basta manter o app em **modo de
-desenvolvimento** e adicionar você mesmo como admin/testador. O App Review só é
-necessário para publicar em contas de terceiros (uso público).
+Caminho **padrão** de publicação do app. Usa a **Instagram API com Login do
+Instagram** (`graph.instagram.com`), feita pela Meta exatamente para publicar na
+**sua própria** conta profissional. É gratuita e, para a sua conta, **não exige
+App Review** nem revisão: basta manter o app em **desenvolvimento** e se adicionar
+como testador.
+
+> **Por que este caminho e não o login do Facebook?** O login do Facebook exige
+> Página + Portfólio empresarial + a permissão `business_management`, e cada etapa
+> costuma travar (`me/accounts` vazio, erro de portfólio, "problema técnico ao
+> conectar o app"). O login do Instagram **dispensa tudo isso**: sem Página, sem
+> Portfólio, sem `business_management`.
 
 Como funciona no app: ao agendar um post aprovado, ele fica `scheduled`; o worker
 `publish-due-posts` (pg_cron, a cada 5 min) publica o carrossel no horário, de
 forma idempotente (não duplica em retentativa).
 
-## 1. Pré-requisitos de conta (grátis)
+## 1. Pré-requisito de conta (grátis)
 
-1. **Instagram profissional** — converta seu Instagram para **Business** ou
-   **Creator** (Configurações → Tipo de conta).
-2. **Página do Facebook** — crie uma (grátis) e **vincule** ao seu Instagram
-   profissional (nas configurações da Página → contas vinculadas, ou pelo app do IG).
-3. **Meta Business** (recomendado) — associe a Página e o Instagram ao seu
-   Business Manager.
+- **Instagram profissional** — a conta precisa ser **Business** ou **Creator**
+  (Instagram → Configurações → Tipo de conta e ferramentas → mudar para
+  profissional). **Só isso.** Não precisa de Página do Facebook nem de Business
+  Manager.
 
-## 2. Criar o app na Meta (modo desenvolvimento)
+## 2. Criar o app na Meta e adicionar o produto Instagram
 
-1. <https://developers.facebook.com> → **My Apps → Create App** → tipo **Business**.
-2. Adicione o produto **Instagram Graph API** (e **Facebook Login** se pedido).
-3. Deixe o app em **Development** (não precisa publicar/Live para uso próprio).
-4. Em **App Roles → Roles**, confirme que você é **Admin**. Adicione a si mesmo
-   como **Instagram Tester** se aparecer a opção, e aceite o convite na sua conta
-   (Instagram → Configurações → Apps e sites → convites de testador).
+1. <https://developers.facebook.com> → **Meus apps → Criar app**.
+2. Em **Casos de uso**, escolha **"Outro"** → tipo **Business** (ou o caso de uso
+   que ofereça o produto **Instagram**).
+3. No painel do app, adicione o produto **Instagram** → aba
+   **"Configuração da API com login do Instagram"** (*API setup with Instagram
+   login*).
+4. Deixe o app em **Desenvolvimento** (não precisa publicar/Live para uso próprio).
 
-## 3. Obter os identificadores e o token
+## 3. Adicionar sua conta como testador
 
-Use o **Graph API Explorer** (developers.facebook.com/tools/explorer) com o seu app:
+1. **Funções do app → Funções** (*App roles → Roles*).
+2. Em **Testadores do Instagram**, clique **Adicionar pessoas** e informe o
+   usuário **@prof.drclaudio_soares**.
+3. Aceite o convite na sua conta: **Instagram → Configurações → Apps e sites →
+   Convites de testador** → **Aceitar**.
 
-1. Gere um **User Access Token** com as permissões:
-   `instagram_basic`, `instagram_content_publish`, `pages_show_list`,
-   `pages_read_engagement`, `business_management`.
-2. Descubra o **IG user id** (`IG_USER_ID`):
-   - `GET /me/accounts` → pega o `id` da sua Página;
-   - `GET /{page-id}?fields=instagram_business_account` → o `id` retornado é o
-     `IG_USER_ID`.
-3. Troque o token curto por um **long-lived token** (`META_LONG_LIVED_TOKEN`):
-   `GET /oauth/access_token?grant_type=fb_exchange_token&client_id={APP_ID}&client_secret={APP_SECRET}&fb_exchange_token={SHORT_TOKEN}`
-   (dura ~60 dias; o app tem job diário de renovação — §10).
+## 4. Gerar o token e descobrir o IG_USER_ID
 
-## 4. Secrets no Supabase
+Ainda na aba **"Configuração da API com login do Instagram"**:
+
+1. Em **"1. Gerar token de acesso"** (*Generate access token*), clique e faça
+   login com **@prof.drclaudio_soares** no popup. Autorize as permissões
+   solicitadas — o app precisa de:
+   `instagram_business_basic`, `instagram_business_content_publish`,
+   `instagram_business_manage_comments` (esta última só para postar as hashtags
+   como primeiro comentário).
+2. O token gerado aparece no campo — é o **`META_LONG_LIVED_TOKEN`** (dura ~60
+   dias; renovável — ver abaixo). Se o painel oferecer um token curto, troque por
+   um de longa duração:
+   `GET https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret={INSTAGRAM_APP_SECRET}&access_token={TOKEN_CURTO}`
+3. Descubra o **IG user id** (`IG_USER_ID`):
+   `GET https://graph.instagram.com/me?fields=user_id,username&access_token={TOKEN}`
+   → o valor de **`user_id`** é o `IG_USER_ID`.
+
+O **App ID** e o **App Secret** ficam em **Configurações do app → Básico**
+(`META_APP_ID` / `META_APP_SECRET`) — usados na troca/renovação do token.
+
+## 5. Secrets no Supabase
+
+Os nomes dos secrets são os mesmos de antes (o worker não muda):
 
 ```bash
 supabase secrets set \
-  IG_USER_ID=<ig-user-id> \
+  IG_USER_ID=<user_id-do-passo-4> \
   META_APP_ID=<app-id> \
   META_APP_SECRET=<app-secret> \
-  META_LONG_LIVED_TOKEN=<long-lived-token>
+  META_LONG_LIVED_TOKEN=<token-do-passo-4>
 ```
+
+Ou rode o workflow **Actions → Set Meta Secrets** (lê os secrets do repositório
+`META_IG_USER_ID`, `META_APP_ID`, `META_APP_SECRET`, `META_LONG_LIVED_TOKEN`).
 
 E no cliente (Vercel/.env): `VITE_PUBLISH_PROVIDER=meta` (padrão).
 
-## 5. Como o carrossel é publicado
+## 6. Como o carrossel é publicado
 
-O worker faz o fluxo oficial de carrossel (§10):
+O worker faz o fluxo oficial de publicação em `graph.instagram.com` (§10):
+
 1. um container por slide (`image_url` = URL assinada de 24h do bucket `renders`,
-   `is_carousel_item=true`, `alt_text`);
-2. um container pai `CAROUSEL` com os filhos + a legenda;
+   `is_carousel_item=true`, `alt_text`); no **card único** (1 slide) publica como
+   imagem, com a legenda na própria mídia;
+2. um container pai `CAROUSEL` com os filhos + a legenda (só para 2+ slides);
 3. `media_publish`;
 4. hashtags como primeiro comentário.
 
@@ -69,10 +96,12 @@ ponto, **sem publicar duplicado**.
 ## Limites e observações
 
 - **Mídia acessível:** a Meta faz cURL na URL da imagem no momento de publicar; o
-  app usa URL assinada de 24h (HTTPS) — funciona em dev mode.
+  app usa URL assinada de 24h (HTTPS) — funciona em modo de desenvolvimento.
 - **Cota:** 100 publicações/conta em 24h (carrossel conta como 1). O app consulta
   `content_publishing_limit` antes de publicar.
-- **Token:** expira (~60 dias); mantenha o job de renovação ativo e olhe a tela de
-  status da conexão antes de quebrar.
-- **App Review:** só é preciso se um dia você for publicar em contas de terceiros.
-  Para o seu próprio perfil, o modo desenvolvimento basta.
+- **Token:** expira (~60 dias). Renove com
+  `GET https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token={TOKEN}`
+  e regrave o `META_LONG_LIVED_TOKEN`. Olhe a tela de status da conexão antes de
+  quebrar.
+- **App Review:** não é necessário para publicar na sua própria conta em modo de
+  desenvolvimento. Só seria preciso para publicar em contas de terceiros.

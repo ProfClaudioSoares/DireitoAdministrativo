@@ -40,11 +40,12 @@ referenciados. Tempo estimado: ~1–2 h (a maior parte é setup na Meta).
 ## 3. Chave da IA (Claude)
 - [ ] **Project Settings → Edge Functions → Secrets**: `ANTHROPIC_API_KEY=<sk-...>`
 
-## 4. Publicação — Meta Graph API (grátis, sua conta) · `docs/meta-setup.md`
-- [ ] IG convertido para profissional + Página vinculada
-- [ ] Criar app na Meta (Business) em **modo desenvolvimento**; você como Admin/Tester
-- [ ] Obter `IG_USER_ID` (via `/me/accounts` → `instagram_business_account`)
-- [ ] Gerar **long-lived token** (`META_LONG_LIVED_TOKEN`)
+## 4. Publicação — Instagram API com Login do Instagram (grátis, sua conta) · `docs/meta-setup.md`
+- [ ] IG convertido para **profissional** (Business/Creator) — sem Página/Portfólio
+- [ ] Criar app na Meta + produto **Instagram** em **modo desenvolvimento**
+- [ ] Adicionar-se como **Testador do Instagram** e aceitar o convite no app do IG
+- [ ] Gerar token na **"Configuração da API com login do Instagram"** → `META_LONG_LIVED_TOKEN`
+- [ ] Obter `IG_USER_ID` (via `graph.instagram.com/me?fields=user_id`)
 - [ ] Secrets no Supabase (Edge Functions):
       `IG_USER_ID`, `META_APP_ID`, `META_APP_SECRET`, `META_LONG_LIVED_TOKEN`
 

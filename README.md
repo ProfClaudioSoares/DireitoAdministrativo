@@ -136,13 +136,15 @@ Variables do projeto no Vercel** (o `vercel pull` as busca) — não precisam ir
 GitHub. Os secrets das Edge Functions e os segredos do Vault (cron) são definidos
 uma vez, fora do CI (via `deploy.sh` ou manualmente).
 
-## Publicação (padrão: Meta Graph API — grátis, um usuário)
+## Publicação (padrão: Instagram API com Login do Instagram — grátis, um usuário)
 
 Selecionada por `VITE_PUBLISH_PROVIDER` (`meta` padrão, ou `mixpost`).
 
-### Meta Graph API (padrão) — `docs/meta-setup.md`
+### Instagram API com Login do Instagram (padrão) — `docs/meta-setup.md`
+Usa `graph.instagram.com` — feita para publicar na **sua própria** conta
+profissional, **sem Página, Portfólio empresarial nem `business_management`**.
 Gratuita e **sem App Review para a sua própria conta** (app em modo de
-desenvolvimento + seu Instagram como admin/testador). Ao agendar, o post fica
+desenvolvimento + seu Instagram como testador). Ao agendar, o post fica
 `scheduled` e o worker **`publish-due-posts`** (pg_cron, a cada 5 min) publica o
 carrossel no horário, de forma **idempotente** (ids de container gravados antes de
 cada passo → retentativa não duplica). Secrets: `IG_USER_ID`, `META_APP_ID`,

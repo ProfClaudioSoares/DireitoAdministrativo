@@ -13,6 +13,10 @@ if (!supabaseConfigured) {
   console.warn('VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY ausentes — configure o .env (veja .env.example).')
 }
 
+// Caminho de publicação: 'mixpost' (padrão) delega o agendamento ao Mixpost;
+// 'meta' usa o worker pg_cron + Meta Graph API (publish-due-posts).
+export const publishProvider = ((import.meta.env.VITE_PUBLISH_PROVIDER as string) || 'mixpost').toLowerCase()
+
 // Placeholders inertes evitam que createClient lance na inicialização quando a
 // config está ausente; as chamadas só ocorrem depois do gate de configuração.
 export const supabase: SupabaseClient = createClient(

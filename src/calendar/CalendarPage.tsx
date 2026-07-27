@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase, invokeFunction } from '@/lib/supabase'
+import { supabase, invokeFunction, publishProvider } from '@/lib/supabase'
 import type { Post } from '@/lib/types'
 
 // Agenda simplificada (§6.4): lista de aprovados agendáveis + agendados.
@@ -28,13 +28,19 @@ export default function CalendarPage() {
 
   async function schedule(post: Post, whenLocal: string) {
     setError(null)
-    // Envia ao Mixpost (que publica no horário) e marca como 'scheduled'.
-    // O trigger de banco revalida o portão ao mudar o status.
     const iso = new Date(whenLocal).toISOString()
     try {
-      await invokeFunction('mixpost-schedule', { post_id: post.id, scheduled_at: iso })
+      if (publishProvider === 'meta') {
+        // Meta: só marca 'scheduled'; o worker pg_cron (publish-due-posts) publica.
+        // O trigger de banco recusa a transição se houver pendência.
+        const { error: err } = await supabase.from('posts').update({ status: 'scheduled', scheduled_at: iso }).eq('id', post.id)
+        if (err) throw err
+      } else {
+        // Mixpost (padrão): a função sobe as mídias e cria o post agendado.
+        await invokeFunction('mixpost-schedule', { post_id: post.id, scheduled_at: iso })
+      }
     } catch (e) {
-      setError((e as Error).message || 'Falha ao agendar no Mixpost.')
+      setError((e as Error).message || 'Falha ao agendar.')
     }
     await refresh()
   }

@@ -52,7 +52,7 @@ function collectStyles(node: unknown): CSSProperties[] {
 }
 
 const AMBER_TOKENS: string[] = [color.amber, color.amberHi, color.amberDeep, color.amberBurnt]
-const ALL: TemplateId[] = ['T1', 'T2', 'T3', 'T4', 'T5']
+const ALL: TemplateId[] = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
 
 describe('§4 — regra do âmbar via amberFor', () => {
   it('nenhum template com fundo paper usa âmbar puro #FD8902', () => {
@@ -81,6 +81,8 @@ describe('§4 — garantia de construção: âmbar nunca preenche área grande (
   // uma canelura. min(width,height) numérico ≤ 10px. Sem isso, âmbar de fundo passaria.
   it('todo backgroundColor âmbar pertence a um elemento fino', () => {
     for (const id of ALL) {
+      // Templates cujo FUNDO é âmbar por design (ex.: T6) são exceção deliberada.
+      if (AMBER_TOKENS.includes(TEMPLATE_META[id].background as string)) continue
       const styles = collectStyles(SlideRenderer(props(id)))
       for (const s of styles) {
         if (s.backgroundColor && AMBER_TOKENS.includes(s.backgroundColor as string)) {

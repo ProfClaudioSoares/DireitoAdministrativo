@@ -9,7 +9,7 @@ import { TYPE } from '@/brand/tokens'
 import type { TemplateId } from '@/lib/types'
 import CanvasPreview from './CanvasPreview'
 
-const TEMPLATES: TemplateId[] = ['T1', 'T2', 'T3', 'T4', 'T5']
+const TEMPLATES: TemplateId[] = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
 
 export default function StudioPage() {
   const { postId } = useParams()

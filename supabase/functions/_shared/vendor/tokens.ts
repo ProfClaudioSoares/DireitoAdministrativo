@@ -13,15 +13,18 @@
 export const color = {
   ink: '#050505', // fundo dos slides escuros e da UI
   paper: '#F0EDE6', // fundo dos slides claros
-  amber: '#FD8902', // cor da marca — tom dominante (SÓ sobre preto)
+  white: '#FFFFFF', // fundo branco puro (T4)
+  amber: '#FD8902', // cor da marca — tom dominante
   amberHi: '#FEB90E', // topo do gradiente do monograma
   amberDeep: '#F67104', // base do gradiente
-  amberBurnt: '#A85000', // ÚNICA variante de âmbar sobre papel
+  amberBurnt: '#A85000', // variante de âmbar sobre papel
   grey: '#8C877E',
   greyDark: '#4E4941',
 } as const
 
-export type Background = typeof color.ink | typeof color.paper
+// Fundo de um slide. A v1 restringia a ink|paper; ampliado para permitir
+// variações de template (âmbar, branco) conforme a direção da marca.
+export type Background = string
 
 // Regra rígida (§4): âmbar puro (#FD8902) SÓ sobre preto. Sobre papel, SEMPRE
 // amber-burnt. Os templates são OBRIGADOS a usar este helper; a cor de âmbar

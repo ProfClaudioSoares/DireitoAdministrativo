@@ -10,7 +10,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { CSSProperties } from 'react'
-import { amberFor, type Background } from './tokens.ts'
 import { COLUMN } from './geometry.ts'
 
 const W = COLUMN.width
@@ -54,15 +53,15 @@ function Capital({ amber, flip }: { amber: string; flip: boolean }): JSX.Element
 }
 
 export function Column({
-  background,
+  accent,
   index,
   total,
 }: {
-  background: Background
+  accent: string // cor das barras/caneluras (definida pelo template, p/ contrastar com o fundo)
   index: number // 0-based
   total: number
 }): JSX.Element {
-  const amber = amberFor(background)
+  const amber = accent
   const progress = Math.min(1, Math.max(0, (index + 1) / total))
 
   return (

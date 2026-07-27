@@ -27,12 +27,15 @@ function Frame({
   index,
   total,
   children,
+  accent,
 }: {
   background: Background
   index: number
   total: number
   children: ReactNode
+  accent?: string // cor da coluna; por padrão a variante de âmbar do fundo
 }): JSX.Element {
+  const columnColor = accent ?? amberFor(background)
   return (
     <div
       style={{
@@ -44,7 +47,7 @@ function Frame({
         overflow: 'hidden',
       }}
     >
-      <Column background={background} index={index} total={total} />
+      <Column accent={columnColor} index={index} total={total} />
       <div
         style={{
           position: 'absolute',
@@ -289,12 +292,135 @@ function T5({ content, index, total, assets }: TemplateProps): JSX.Element {
   )
 }
 
+// ── T6 · Destaque âmbar (fundo laranja): rótulo/citação preto · título branco ──
+function T6({ content, index, total, assets }: TemplateProps): JSX.Element {
+  const bg = color.amber // fundo laranja
+  return (
+    <Frame background={bg} accent={color.ink} index={index} total={total}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+        <div
+          style={{
+            fontFamily: 'Jost',
+            fontWeight: 500,
+            fontSize: TYPE.label,
+            letterSpacing: 4,
+            textTransform: 'uppercase',
+            color: color.ink, // rótulo em preto
+            width: CONTENT.width,
+            lineHeight: TYPE.lineHeight,
+          }}
+        >
+          {content.eyebrow ?? ''}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', width: CONTENT.width }}>
+          <div
+            style={{
+              fontFamily: 'Playfair Display',
+              fontWeight: 500,
+              fontSize: TYPE.title,
+              color: color.white, // título em branco
+              width: CONTENT.width,
+              lineHeight: TYPE.lineHeight,
+            }}
+          >
+            {content.title ?? ''}
+          </div>
+          {content.body && (
+            <div
+              style={{
+                fontFamily: 'Jost',
+                fontWeight: 300,
+                fontSize: TYPE.body,
+                color: color.white,
+                width: CONTENT.width,
+                lineHeight: TYPE.lineHeight,
+                marginTop: 32,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {content.body}
+            </div>
+          )}
+          {content.citation && (
+            <div
+              style={{
+                fontFamily: 'Jost',
+                fontWeight: 500,
+                fontSize: TYPE.label + 6,
+                letterSpacing: 2,
+                color: color.ink, // citação em preto
+                width: CONTENT.width,
+                lineHeight: TYPE.lineHeight,
+                marginTop: 40,
+              }}
+            >
+              {content.citation}
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex' }}>
+          <Monogram src={assets.monogramDark} size={100} />
+        </div>
+      </div>
+    </Frame>
+  )
+}
+
+// ── T7 · Numeral claro (fundo branco): numeral preto · título/corpo laranja ────
+function T7({ content, index, total, assets }: TemplateProps): JSX.Element {
+  const bg = color.white // fundo branco
+  return (
+    <Frame background={bg} accent={color.amber} index={index} total={total}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', width: CONTENT.width }}>
+          {/* numeral em preto */}
+          <div style={{ fontFamily: 'Playfair Display', fontWeight: 500, fontSize: 140, color: color.ink, lineHeight: 1, width: CONTENT.width }}>
+            {String(index + 1).padStart(2, '0')}
+          </div>
+          <div
+            style={{
+              fontFamily: 'Playfair Display',
+              fontWeight: 500,
+              fontSize: TYPE.subtitle,
+              color: color.amber, // título laranja
+              width: CONTENT.width,
+              lineHeight: TYPE.lineHeight,
+              marginTop: 24,
+            }}
+          >
+            {content.title ?? ''}
+          </div>
+          <div
+            style={{
+              fontFamily: 'Jost',
+              fontWeight: 300,
+              fontSize: TYPE.body,
+              color: color.amberDeep, // corpo laranja (tom levemente mais escuro p/ leitura)
+              width: CONTENT.width,
+              lineHeight: TYPE.lineHeight,
+              marginTop: 40,
+              whiteSpace: 'pre-wrap',
+            }}
+          >
+            {content.body ?? ''}
+          </div>
+        </div>
+        <div style={{ display: 'flex' }}>
+          <Monogram src={assets.monogramDark} size={100} />
+        </div>
+      </div>
+    </Frame>
+  )
+}
+
 export const TEMPLATE_META: Record<TemplateId, TemplateMeta> = {
   T1: { id: 'T1', name: 'Capa-tese', background: color.ink },
   T2: { id: 'T2', name: 'Conteúdo', background: color.paper },
   T3: { id: 'T3', name: 'Dispositivo', background: color.ink },
   T4: { id: 'T4', name: 'Tese', background: color.ink },
   T5: { id: 'T5', name: 'Fecho', background: color.ink },
+  T6: { id: 'T6', name: 'Destaque âmbar', background: color.amber },
+  T7: { id: 'T7', name: 'Numeral claro', background: color.white },
 }
 
 const REGISTRY: Record<TemplateId, (p: TemplateProps) => JSX.Element> = {
@@ -303,6 +429,8 @@ const REGISTRY: Record<TemplateId, (p: TemplateProps) => JSX.Element> = {
   T3,
   T4,
   T5,
+  T6,
+  T7,
 }
 
 /** Ponto único de render de um slide, por id de template. Usado no preview e no satori. */

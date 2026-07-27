@@ -6,6 +6,7 @@ import CalendarPage from '@/calendar/CalendarPage'
 import LibraryPage from '@/library/LibraryPage'
 import Login from './Login'
 import { useSession, signOut } from '@/lib/auth'
+import { demoMode } from '@/lib/supabase'
 
 const NAV = [
   { to: '/gerar', label: 'Gerar' },
@@ -43,10 +44,17 @@ export default function App() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-4 text-sm text-grey">
+          {demoMode && (
+            <span className="text-xs uppercase tracking-widest text-amber border border-amber/50 rounded px-2 py-1">
+              Modo demo
+            </span>
+          )}
           <span className="hidden sm:inline">{session.user.email}</span>
-          <button onClick={() => void signOut()} className="hover:text-paper transition-colors">
-            Sair
-          </button>
+          {!demoMode && (
+            <button onClick={() => void signOut()} className="hover:text-paper transition-colors">
+              Sair
+            </button>
+          )}
         </div>
       </header>
 

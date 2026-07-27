@@ -16,3 +16,6 @@ src/brand/fonts/*.ttf
 
 # Binários da marca colocados localmente para upload ao bucket
 brand-assets/
+
+# Build de artifact (single-file) — não versionar
+dist-artifact/

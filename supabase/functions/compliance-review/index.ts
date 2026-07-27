@@ -33,14 +33,17 @@ async function iaLayer(fullText: string): Promise<IaFlag[]> {
       },
       body: JSON.stringify({
         model: GENERATE_MODEL,
-        max_tokens: 1500,
+        max_tokens: 8000, // cobre o extended thinking + o JSON (senão para em max_tokens)
         system: REVIEW_SYSTEM,
         messages: [{ role: 'user', content: fullText }],
       }),
     })
     if (!res.ok) return []
     const data = await res.json()
-    const text = String(data?.content?.[0]?.text ?? '')
+    // pega o bloco de texto em qualquer posição (pode haver bloco de thinking antes)
+    const blocks = Array.isArray(data?.content) ? data.content : []
+    const raw = blocks.find((b: { type?: string; text?: unknown }) => b?.type === 'text' && typeof b?.text === 'string')?.text ?? ''
+    const text = String(raw)
       .replace(/^```(?:json)?\s*/i, '')
       .replace(/\s*```$/i, '')
     const parsed = JSON.parse(text)

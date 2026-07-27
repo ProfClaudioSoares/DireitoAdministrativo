@@ -29,8 +29,10 @@ async function callModel(userText: string): Promise<string> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
+      // claude-sonnet-5 usa extended thinking: o orçamento precisa cobrir o
+      // raciocínio + o JSON de saída, senão para em max_tokens sem bloco de texto.
       model: GENERATE_MODEL,
-      max_tokens: 2000,
+      max_tokens: 8000,
       system: GENERATE_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userText }],
     }),

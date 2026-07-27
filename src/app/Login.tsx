@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, supabaseConfigured } from '@/lib/supabase'
 
 // Tela de acesso. App de dono único: entrar ou criar a conta do titular.
 export default function Login() {
@@ -42,6 +42,14 @@ export default function Login() {
           Estúdio de Conteúdo <span className="text-amber">CS</span>
         </div>
         <p className="text-grey mb-8 text-sm">{mode === 'signin' ? 'Entrar na sua conta' : 'Criar a conta do titular'}</p>
+
+        {!supabaseConfigured && (
+          <div className="mb-6 border border-amber/60 bg-amber/10 text-amber rounded px-4 py-3 text-sm">
+            Supabase não configurado. Copie <code>.env.example</code> para <code>.env</code> e preencha{' '}
+            <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>, depois reinicie o <code>npm run dev</code>.
+            Sem isso, login e dados não funcionam.
+          </div>
+        )}
 
         <form onSubmit={submit} className="flex flex-col gap-4">
           <label className="block">

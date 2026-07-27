@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStudio } from '@/lib/store'
-import { supabase } from '@/lib/supabase'
+import { supabase, invokeFunction, publishProvider } from '@/lib/supabase'
 
 export default function CompliancePage() {
   const { postId } = useParams()
   const navigate = useNavigate()
   const { post, citations, flags, load } = useStudio()
   const [busy, setBusy] = useState(false)
+  const [when, setWhen] = useState('')
+  const [schedErr, setSchedErr] = useState<string | null>(null)
 
   useEffect(() => {
     if (postId) void load(postId)
@@ -35,6 +37,32 @@ export default function CompliancePage() {
     await supabase.from('posts').update({ status: 'approved' }).eq('id', postId)
     setBusy(false)
     navigate('/agenda')
+  }
+
+  // Agenda direto daqui: aprova (se preciso) e agenda pelo provedor configurado.
+  // Os triggers/functions validam citações, bloqueios e render — erros aparecem abaixo.
+  async function scheduleNow() {
+    if (!postId || !canApprove || !when) return
+    setBusy(true)
+    setSchedErr(null)
+    try {
+      const iso = new Date(when).toISOString()
+      if (post && post.status !== 'approved' && post.status !== 'scheduled') {
+        const { error } = await supabase.from('posts').update({ status: 'approved' }).eq('id', postId)
+        if (error) throw new Error(error.message)
+      }
+      if (publishProvider === 'meta') {
+        const { error } = await supabase.from('posts').update({ status: 'scheduled', scheduled_at: iso }).eq('id', postId)
+        if (error) throw new Error(error.message)
+      } else {
+        await invokeFunction('mixpost-schedule', { post_id: postId, scheduled_at: iso })
+      }
+      navigate('/agenda')
+    } catch (e) {
+      setSchedErr((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
   }
 
   if (!post) return <div className="px-6 py-12 text-grey">Carregando…</div>
@@ -76,7 +104,7 @@ export default function CompliancePage() {
         </div>
       </section>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <button
           onClick={approve}
           disabled={!canApprove || busy}
@@ -84,6 +112,25 @@ export default function CompliancePage() {
         >
           Aprovar
         </button>
+
+        {/* Agendar direto da conformidade */}
+        <div className="flex items-center gap-2 border-l border-grey-dark/40 pl-4">
+          <input
+            type="datetime-local"
+            value={when}
+            onChange={(e) => setWhen(e.target.value)}
+            disabled={!canApprove || busy}
+            className="bg-transparent border border-grey-dark rounded px-3 py-2 text-sm focus:border-amber outline-none disabled:opacity-40"
+          />
+          <button
+            onClick={scheduleNow}
+            disabled={!canApprove || !when || busy}
+            className="border border-amber text-amber font-medium px-5 py-2 rounded disabled:opacity-40 hover:bg-amber hover:text-ink transition-colors"
+          >
+            {busy ? '…' : 'Aprovar e agendar'}
+          </button>
+        </div>
+
         {!canApprove && (
           <span className="text-sm text-grey">
             {unverified.length > 0 && `${unverified.length} citação(ões) por verificar. `}
@@ -91,6 +138,7 @@ export default function CompliancePage() {
           </span>
         )}
       </div>
+      {schedErr && <p className="text-red-400 text-sm mt-3">{schedErr}</p>}
     </div>
   )
 }

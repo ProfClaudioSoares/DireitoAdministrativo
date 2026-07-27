@@ -12,6 +12,7 @@ interface StudioState {
   load: (postId: string) => Promise<void>
   select: (slideId: string) => void
   updateSlide: (slideId: string, patch: Partial<Slide>) => Promise<void>
+  updatePost: (patch: Partial<Post>) => Promise<void>
   reset: () => void
 }
 
@@ -60,6 +61,14 @@ export const useStudio = create<StudioState>((set, get) => ({
       const { data: post } = await supabase.from('posts').select('*').eq('id', pid).single()
       if (post) set({ post: post as Post })
     }
+  },
+
+  async updatePost(patch) {
+    const pid = get().post?.id
+    if (!pid) return
+    const { data, error } = await supabase.from('posts').update(patch).eq('id', pid).select().single()
+    if (error) throw new Error(error.message)
+    if (data) set({ post: data as Post })
   },
 
   reset() {

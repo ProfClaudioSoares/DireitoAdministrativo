@@ -58,10 +58,15 @@ async function callModel(userText: string): Promise<string> {
 
 function buildUserText(input: GenInput): string {
   const angle = input.angle ? `\nÂngulo: ${input.angle}.` : ''
+  const single =
+    input.count === 1
+      ? '\nÉ um CARD ÚNICO (não carrossel): produza 1 card autônomo e completo, ' +
+        'com legenda própria. Não precisa começar em T1 nem terminar em T5.'
+      : ''
   return (
     `Tema: ${input.topic}.\n` +
     `Pilar: ${input.pillar}.\n` +
-    `Gere exatamente ${input.count} slides.${angle}\n\n` +
+    `Gere exatamente ${input.count} ${input.count === 1 ? 'card' : 'slides'}.${angle}${single}\n\n` +
     `${CAPTION_FORMULA}`
   )
 }
@@ -84,7 +89,7 @@ Deno.serve(async (req) => {
   }
   if (!input.topic) return fail('Informe um tema.')
   if (!PILLARS.includes(input.pillar)) return fail('Pilar inválido.')
-  if (input.count < 5 || input.count > 7) return fail('Número de slides deve ser de 5 a 7.')
+  if (input.count < 1 || input.count > 10) return fail('Número de cards deve ser de 1 a 10.')
 
   // ── Chamada + parse defensivo com uma única retentativa (§7) ────────────────
   let userText = buildUserText(input)

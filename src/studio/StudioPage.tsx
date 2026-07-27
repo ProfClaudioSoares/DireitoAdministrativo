@@ -15,7 +15,7 @@ const IMAGE_TEMPLATES: TemplateId[] = ['T8', 'T9']
 export default function StudioPage() {
   const { postId } = useParams()
   const navigate = useNavigate()
-  const { post, slides, load, selectedSlideId, select, updateSlide, loading } = useStudio()
+  const { post, slides, load, selectedSlideId, select, updateSlide, updatePost, loading } = useStudio()
   const [fontsReady, setFontsReady] = useState(areFontsReady())
   const [running, setRunning] = useState(false)
   const [rendering, setRendering] = useState<string | null>(null)
@@ -130,6 +130,20 @@ export default function StudioPage() {
             </button>
           ))}
         </div>
+
+        {/* Legenda do post (acompanha a publicação dos cards) */}
+        <CaptionEditor
+          value={post.caption ?? ''}
+          onChange={async (v) => {
+            setErr(null)
+            setOkMsg(null)
+            try {
+              await updatePost({ caption: v })
+            } catch (e) {
+              setErr((e as Error).message)
+            }
+          }}
+        />
       </div>
 
       {/* Painel lateral: campos do slide selecionado */}
@@ -246,6 +260,28 @@ function ImageUpload({ slide, onChange }: { slide: Slide; onChange: (patch: Part
         )}
       </div>
       {error && <p className="text-red-400 text-sm mt-1">{error}</p>}
+    </div>
+  )
+}
+
+// Legenda do post (post-level): edição local, salva ao sair do campo.
+function CaptionEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [local, setLocal] = useState(value)
+  useEffect(() => setLocal(value), [value])
+  return (
+    <div className="mt-8">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs uppercase tracking-widest text-grey">Legenda da publicação</span>
+        <span className="text-xs text-grey/60">{local.length} caracteres</span>
+      </div>
+      <textarea
+        value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        onBlur={() => local !== value && onChange(local)}
+        rows={8}
+        placeholder="Legenda que acompanha os cards na publicação…"
+        className="w-full bg-transparent border border-grey-dark rounded px-3 py-3 focus:border-amber outline-none text-sm leading-relaxed"
+      />
     </div>
   )
 }

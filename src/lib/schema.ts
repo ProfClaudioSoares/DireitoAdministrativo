@@ -19,11 +19,12 @@ export const generatedCarouselSchema = z.object({
   title: z.string().min(1),
   slides: z
     .array(generatedSlideSchema)
-    .min(5)
-    .max(7)
-    // ESTRUTURA (§7): começa sempre em T1, termina sempre em T5.
-    .refine((s) => s[0]?.template === 'T1', { message: 'O primeiro slide deve ser T1 (capa-tese).' })
-    .refine((s) => s[s.length - 1]?.template === 'T5', { message: 'O último slide deve ser T5 (fecho).' }),
+    .min(1)
+    .max(10)
+    // ESTRUTURA (§7): carrossel começa em T1 e termina em T5. Card único (len 1)
+    // é autônomo — sem essa exigência.
+    .refine((s) => s.length === 1 || s[0]?.template === 'T1', { message: 'O primeiro slide deve ser T1 (capa-tese).' })
+    .refine((s) => s.length === 1 || s[s.length - 1]?.template === 'T5', { message: 'O último slide deve ser T5 (fecho).' }),
   caption: z.string().min(1),
   hashtags: z.array(z.string()),
 })

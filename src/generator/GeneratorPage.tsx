@@ -84,13 +84,13 @@ export default function GeneratorPage() {
         </label>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-widest text-grey">Slides (5–7)</span>
+          <span className="text-xs uppercase tracking-widest text-grey">Cards (1 = post único)</span>
           <input
             type="number"
-            min={5}
-            max={7}
+            min={1}
+            max={10}
             value={count}
-            onChange={(e) => setCount(Math.min(7, Math.max(5, Number(e.target.value))))}
+            onChange={(e) => setCount(Math.min(10, Math.max(1, Number(e.target.value))))}
             className="mt-2 w-full bg-transparent border border-grey-dark rounded px-3 py-3 focus:border-amber outline-none"
           />
         </label>

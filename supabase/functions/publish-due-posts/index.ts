@@ -69,24 +69,26 @@ async function publishPost(supabase: Supa, post: Record<string, unknown>, igUser
   let childIds: string[] = (post.ig_child_container_ids as string[] | null) ?? []
   let parentId = (post.ig_parent_container_id as string | null) ?? null
 
-  // Passo 1 — containers-filho, um por slide. Só cria os que ainda faltam.
+  // Card único (1 slide) publica como IMAGEM; 2+ slides como CAROUSEL.
+  const isSingle = slides.length === 1
+
+  // Passo 1 — mídias. No card único, a legenda já vai na própria mídia.
   for (let i = childIds.length; i < slides.length; i++) {
     const s = slides[i]
     const { data: signed } = await supabase.storage.from('renders').createSignedUrl(s.rendered_url as string, 24 * 3600)
     if (!signed?.signedUrl) throw new Error(`Slide ${i} sem URL assinada (render ausente?).`)
-    const child = await metaPost(`${igUser}/media`, {
-      image_url: signed.signedUrl,
-      is_carousel_item: 'true',
-      ...(s.alt_text ? { alt_text: String(s.alt_text) } : {}),
-    })
+    const params: Record<string, string> = isSingle
+      ? { image_url: signed.signedUrl, caption: String(post.caption ?? ''), ...(s.alt_text ? { alt_text: String(s.alt_text) } : {}) }
+      : { image_url: signed.signedUrl, is_carousel_item: 'true', ...(s.alt_text ? { alt_text: String(s.alt_text) } : {}) }
+    const child = await metaPost(`${igUser}/media`, params)
     childIds = [...childIds, String(child.id)]
     // ⚠ persiste imediatamente (idempotência)
     await supabase.from('posts').update({ ig_child_container_ids: childIds }).eq('id', postId)
     await logStep(supabase, postId, 1, 'child', true, { i, id: child.id })
   }
 
-  // Passo 2 — container pai CAROUSEL. Só cria se ainda não existe.
-  if (!parentId) {
+  // Passo 2 — container pai CAROUSEL (só quando há 2+ slides). Só cria se não existe.
+  if (!isSingle && !parentId) {
     const parent = await metaPost(`${igUser}/media`, {
       media_type: 'CAROUSEL',
       children: childIds.join(','),
@@ -97,8 +99,9 @@ async function publishPost(supabase: Supa, post: Record<string, unknown>, igUser
     await logStep(supabase, postId, 1, 'parent', true, { id: parentId })
   }
 
-  // Passo 3 — publicar. Retentar com o MESMO parent é seguro.
-  const published = await metaPost(`${igUser}/media_publish`, { creation_id: parentId })
+  // Passo 3 — publicar. Card único usa o próprio container da imagem; carrossel, o pai.
+  const creationId = isSingle ? childIds[0] : parentId
+  const published = await metaPost(`${igUser}/media_publish`, { creation_id: creationId as string })
   const mediaId = String(published.id)
   await supabase
     .from('posts')

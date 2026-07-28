@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useStudio } from '@/lib/store'
 import { loadBrandFonts } from '@/lib/fonts'
 import { checkBodyFit, areFontsReady, BODY_MAX_CHARS_PER_LINE } from '@/lib/measure'
-import { invokeFunction, supabase } from '@/lib/supabase'
+import { invokeFunction, supabase, publishProvider } from '@/lib/supabase'
 import { CONTENT } from '@/templates/geometry'
 import { TYPE } from '@/brand/tokens'
 import type { Slide, TemplateId } from '@/lib/types'
@@ -21,6 +21,9 @@ export default function StudioPage() {
   const [rendering, setRendering] = useState<string | null>(null)
   const [okMsg, setOkMsg] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  const [when, setWhen] = useState('')
+  const [scheduling, setScheduling] = useState(false)
+  const [schedErr, setSchedErr] = useState<string | null>(null)
 
   // Salva um patch no slide selecionado e mostra o erro se o banco recusar.
   async function commit(slideId: string, patch: Parameters<typeof updateSlide>[1]) {
@@ -45,6 +48,30 @@ export default function StudioPage() {
 
   const selected = slides.find((s) => s.id === selectedSlideId) ?? slides[0]
   const locked = post?.status === 'approved' || post?.status === 'scheduled'
+  const allRendered = slides.length > 0 && slides.every((s) => s.rendered_url)
+
+  // Aprova e agenda direto do estúdio — SEM exigir a análise de conformidade.
+  // A conformidade é opcional; sem citações/flags pendentes, o gate do banco só
+  // pede que os slides estejam renderizados (§5). Erros do gate aparecem abaixo.
+  async function scheduleNow() {
+    if (!postId || !when || !allRendered) return
+    setScheduling(true)
+    setSchedErr(null)
+    try {
+      const iso = new Date(when).toISOString()
+      if (publishProvider === 'meta') {
+        const { error } = await supabase.from('posts').update({ status: 'scheduled', scheduled_at: iso }).eq('id', postId)
+        if (error) throw new Error(error.message)
+      } else {
+        await invokeFunction('mixpost-schedule', { post_id: postId, scheduled_at: iso })
+      }
+      navigate('/biblioteca')
+    } catch (e) {
+      setSchedErr((e as Error).message)
+    } finally {
+      setScheduling(false)
+    }
+  }
 
   async function runCompliance() {
     if (!postId) return
@@ -192,12 +219,34 @@ export default function StudioPage() {
               >
                 {rendering ?? 'Renderizar imagens'}
               </button>
+
+              {/* Aprovar e agendar — direto daqui, sem exigir conformidade */}
+              <div className="border border-grey-dark rounded p-3 flex flex-col gap-2">
+                <span className="text-xs uppercase tracking-widest text-grey">Aprovar e agendar</span>
+                <input
+                  type="datetime-local"
+                  value={when}
+                  onChange={(e) => setWhen(e.target.value)}
+                  className="w-full bg-transparent border border-grey-dark rounded px-3 py-2 text-sm focus:border-amber outline-none"
+                />
+                <button
+                  onClick={scheduleNow}
+                  disabled={!allRendered || !when || scheduling}
+                  className="bg-amber text-ink font-medium rounded px-4 py-2 disabled:opacity-40 hover:bg-amber-hi transition-colors"
+                >
+                  {scheduling ? 'Agendando…' : 'Aprovar e agendar'}
+                </button>
+                {!allRendered && <p className="text-xs text-grey">Renderize as imagens antes de agendar.</p>}
+                {schedErr && <p className="text-red-400 text-sm">{schedErr}</p>}
+              </div>
+
+              {/* Conformidade agora é opcional (não trava o agendamento) */}
               <button
                 onClick={runCompliance}
                 disabled={running}
-                className="bg-amber text-ink font-medium rounded px-4 py-2 disabled:opacity-40 hover:bg-amber-hi transition-colors"
+                className="border border-grey-dark text-grey rounded px-4 py-2 hover:border-amber hover:text-paper disabled:opacity-40 transition-colors text-sm"
               >
-                {running ? 'Analisando…' : 'Rodar conformidade'}
+                {running ? 'Analisando…' : 'Rodar conformidade (opcional)'}
               </button>
             </div>
           </>

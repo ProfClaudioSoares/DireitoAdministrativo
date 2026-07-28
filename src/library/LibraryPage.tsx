@@ -5,6 +5,44 @@ import { PILLARS, type Pillar, type Post, type PostStatus } from '@/lib/types'
 
 const STATUSES: (PostStatus | 'todos')[] = ['todos', 'draft', 'review', 'blocked', 'approved', 'scheduled', 'published', 'failed']
 
+// Rótulos em português para os status (§5).
+const STATUS_LABEL: Record<PostStatus, string> = {
+  draft: 'Rascunho',
+  review: 'Em revisão',
+  blocked: 'Bloqueado',
+  approved: 'Aprovado',
+  scheduled: 'Agendado',
+  published: 'Publicado',
+  failed: 'Falhou',
+}
+
+// Cor do selo por status (paleta padrão do Tailwind, preservada pelo extend).
+const STATUS_CLASS: Record<PostStatus, string> = {
+  draft: 'text-grey border-grey-dark',
+  review: 'text-amber border-amber/60',
+  blocked: 'text-red-300 border-red-600/60',
+  approved: 'text-amber border-amber/60',
+  scheduled: 'text-sky-300 border-sky-500/60',
+  published: 'text-green-300 border-green-600/60',
+  failed: 'text-red-300 border-red-600/60',
+}
+
+function statusLabel(s: PostStatus | 'todos'): string {
+  return s === 'todos' ? 'Todos os status' : STATUS_LABEL[s]
+}
+
+// Data legível em pt-BR (dia/mês/ano hora:min). Vazio quando não houver data.
+function fmtDate(iso: string | null): string {
+  if (!iso) return ''
+  return new Date(iso).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export default function LibraryPage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [pillar, setPillar] = useState<Pillar | 'todos'>('todos')
@@ -66,7 +104,7 @@ export default function LibraryPage() {
         <select value={status} onChange={(e) => setStatus(e.target.value as PostStatus | 'todos')} className="bg-ink border border-grey-dark rounded px-3 py-2 text-sm">
           {STATUSES.map((s) => (
             <option key={s} value={s}>
-              {s}
+              {statusLabel(s)}
             </option>
           ))}
         </select>
@@ -74,16 +112,42 @@ export default function LibraryPage() {
 
       <div className="grid grid-cols-2 gap-4">
         {posts.map((p) => (
-          <div key={p.id} className="border border-grey-dark rounded p-4 flex items-center justify-between">
-            <div>
-              <Link to={`/estudio/${p.id}`} className="text-paper hover:text-amber font-display text-lg">
+          <div key={p.id} className="border border-grey-dark rounded p-4 flex flex-col gap-3">
+            <div className="flex items-start justify-between gap-3">
+              <Link to={`/estudio/${p.id}`} className="text-paper hover:text-amber font-display text-lg leading-tight">
                 {p.title}
               </Link>
-              <div className="text-xs text-grey mt-1">
-                {p.pillar} · {p.status}
-              </div>
+              <span
+                className={`shrink-0 text-[11px] uppercase tracking-widest border rounded-full px-2.5 py-1 ${STATUS_CLASS[p.status]}`}
+              >
+                {STATUS_LABEL[p.status]}
+              </span>
             </div>
-            <div className="flex gap-2">
+
+            <div className="text-xs text-grey">{p.pillar}</div>
+
+            {/* Datas de agendamento e publicação */}
+            {(p.scheduled_at || p.published_at) && (
+              <div className="text-xs text-grey/90 flex flex-col gap-0.5">
+                {p.scheduled_at && (
+                  <span>
+                    <span className="text-grey/60">Agendado para:</span> {fmtDate(p.scheduled_at)}
+                  </span>
+                )}
+                {p.published_at && (
+                  <span>
+                    <span className="text-grey/60">Publicado em:</span> {fmtDate(p.published_at)}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Mensagem de erro, quando a publicação falhou */}
+            {p.status === 'failed' && p.error_message && (
+              <div className="text-xs text-red-300 border border-red-600/40 rounded px-2 py-1">{p.error_message}</div>
+            )}
+
+            <div className="flex gap-2 mt-1">
               <Link to={`/conformidade/${p.id}`} className="border border-grey-dark rounded px-3 py-1 text-sm hover:border-amber">
                 Conformidade
               </Link>

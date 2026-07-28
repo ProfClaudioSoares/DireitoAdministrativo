@@ -7,7 +7,12 @@
 import { adminClient } from '../_shared/client.ts'
 import { json } from '../_shared/cors.ts'
 
-const GRAPH = 'https://graph.facebook.com/v20.0'
+// Instagram API com **Login do Instagram** (graph.instagram.com): publica na
+// própria conta profissional sem exigir Página, Portfólio empresarial nem a
+// permissão `business_management`. Os endpoints de publicação — `{ig-user}/media`,
+// `media_publish`, `content_publishing_limit`, `{media}/comments` — são idênticos
+// aos da Graph API; muda só o host e a origem do IG_USER_ID (ver docs/meta-setup.md).
+const GRAPH = 'https://graph.instagram.com/v21.0'
 const MAX_SLIDES = 10 // ⚠ trava em código (§10). Publicamos 5–7; o teto não incomoda.
 const MAX_ATTEMPTS = 3
 const DAILY_LIMIT = 100 // publicações/conta em janela móvel de 24h (§10)

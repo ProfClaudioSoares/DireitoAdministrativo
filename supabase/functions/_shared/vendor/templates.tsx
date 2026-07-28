@@ -22,6 +22,14 @@ import type { BrandAssets, SlideContent, TemplateMeta, TemplateProps } from './t
 // Assinatura fixa do titular (§7).
 const OAB = 'OAB/RS 49.924'
 
+// Cor da assinatura discreta, legível sobre cada fundo (respeita §4: nunca âmbar
+// sobre papel, nunca amber-burnt sobre ink — aqui usamos só cinza/grafite/preto).
+function signatureColor(background: Background): string {
+  if (background === color.paper || background === color.white) return color.greyDark
+  if (background === color.amber) return color.ink
+  return color.grey
+}
+
 function Frame({
   background,
   index,
@@ -61,6 +69,31 @@ function Frame({
       >
         {children}
       </div>
+      {/* Assinatura discreta da marca — no canto inferior, em todos os templates. */}
+      <div
+        style={{
+          position: 'absolute',
+          top: SLIDE_H - 66,
+          left: 0,
+          width: SLIDE_W - 56,
+          display: 'flex',
+          justifyContent: 'flex-end',
+        }}
+      >
+        <div
+          style={{
+            fontFamily: 'Jost',
+            fontWeight: 500,
+            fontSize: 22,
+            letterSpacing: 3,
+            color: signatureColor(background),
+            width: 420,
+            textAlign: 'right',
+          }}
+        >
+          Claudio Soares
+        </div>
+      </div>
     </div>
   )
 }
@@ -84,7 +117,7 @@ function Monogram({ src, size }: { src: string; size: number }): JSX.Element {
 }
 
 // ── T1 · Capa-tese (ink): rótulo · título grande · fio âmbar · monograma ──────
-function T1({ content, index, total, assets }: TemplateProps): JSX.Element {
+function T1({ content, index, total }: TemplateProps): JSX.Element {
   const bg = color.ink
   const amber = amberFor(bg)
   return (
@@ -107,16 +140,13 @@ function T1({ content, index, total, assets }: TemplateProps): JSX.Element {
           {/* fio âmbar — altura ≤ 6px (§4) */}
           <div style={{ width: 220, height: 6, backgroundColor: amber, marginTop: 40 }} />
         </div>
-        <div style={{ display: 'flex' }}>
-          <Monogram src={assets.monogramAmber} size={120} />
-        </div>
       </div>
     </Frame>
   )
 }
 
 // ── T2 · Conteúdo (paper): numeral queimado · subtítulo · corpo · monograma escuro
-function T2({ content, index, total, assets }: TemplateProps): JSX.Element {
+function T2({ content, index, total }: TemplateProps): JSX.Element {
   const bg = color.paper
   const amber = amberFor(bg) // amber-burnt — sobre papel, sempre a variante queimada
   return (
@@ -163,9 +193,6 @@ function T2({ content, index, total, assets }: TemplateProps): JSX.Element {
           >
             {content.body ?? ''}
           </div>
-        </div>
-        <div style={{ display: 'flex' }}>
-          <Monogram src={assets.monogramDark} size={100} />
         </div>
       </div>
     </Frame>
@@ -262,7 +289,6 @@ function T5({ content, index, total, assets }: TemplateProps): JSX.Element {
     <Frame background={bg} index={index} total={total}>
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 28, width: CONTENT.width }}>
-          <Monogram src={assets.monogramAmber} size={180} />
           <Monogram src={assets.wordmark} size={280} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', width: CONTENT.width, gap: 16 }}>
@@ -293,7 +319,7 @@ function T5({ content, index, total, assets }: TemplateProps): JSX.Element {
 }
 
 // ── T6 · Destaque âmbar (fundo laranja): rótulo/citação preto · título branco ──
-function T6({ content, index, total, assets }: TemplateProps): JSX.Element {
+function T6({ content, index, total }: TemplateProps): JSX.Element {
   const bg = color.amber // fundo laranja
   return (
     <Frame background={bg} accent={color.ink} index={index} total={total}>
@@ -358,16 +384,13 @@ function T6({ content, index, total, assets }: TemplateProps): JSX.Element {
             </div>
           )}
         </div>
-        <div style={{ display: 'flex' }}>
-          <Monogram src={assets.monogramDark} size={100} />
-        </div>
       </div>
     </Frame>
   )
 }
 
 // ── T7 · Numeral claro (fundo branco): numeral preto · título/corpo laranja ────
-function T7({ content, index, total, assets }: TemplateProps): JSX.Element {
+function T7({ content, index, total }: TemplateProps): JSX.Element {
   const bg = color.white // fundo branco
   return (
     <Frame background={bg} accent={color.amber} index={index} total={total}>
@@ -404,9 +427,6 @@ function T7({ content, index, total, assets }: TemplateProps): JSX.Element {
           >
             {content.body ?? ''}
           </div>
-        </div>
-        <div style={{ display: 'flex' }}>
-          <Monogram src={assets.monogramDark} size={100} />
         </div>
       </div>
     </Frame>

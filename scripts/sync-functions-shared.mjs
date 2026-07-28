@@ -37,7 +37,7 @@ function vendor(srcRel, outName) {
 writeFileSync(
   join(OUT, 'app-types.ts'),
   HEADER.replace('{src}', 'src/lib/types.ts (subset)') +
-    "\nexport type TemplateId = 'T1' | 'T2' | 'T3' | 'T4' | 'T5'\n",
+    "\nexport type TemplateId = 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'T6' | 'T7' | 'T8' | 'T9'\n",
 )
 console.log('wrote app-types.ts (TemplateId)')
 

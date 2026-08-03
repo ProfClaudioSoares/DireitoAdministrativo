@@ -1,0 +1,18 @@
+name: Vercel Info
+
+# Imprime id/orgId/vínculo Git do projeto no Vercel (diagnóstico do auto-deploy).
+on:
+  workflow_dispatch: {}
+
+jobs:
+  info:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: '[ -n "$VERCEL_TOKEN" ] || { echo "Falta o secret VERCEL_TOKEN."; exit 1; }'
+      - run: node scripts/vercel-project-info.mjs

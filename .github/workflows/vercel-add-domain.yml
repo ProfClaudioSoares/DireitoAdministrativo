@@ -1,0 +1,32 @@
+name: Vercel Add Domain
+
+# Adiciona um domínio a um projeto do Vercel via API (a rede desta sessão não
+# alcança api.vercel.com; os runners do GitHub, sim). O token é passado como
+# input e mascarado no log. Disparo MANUAL.
+on:
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: "Domínio/subdomínio a adicionar"
+        required: true
+        default: "estudio.claudiosoares.adv.br"
+      vercel_token:
+        description: "Token de API do Vercel (será mascarado)"
+        required: true
+
+jobs:
+  add-domain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Adicionar domínio no Vercel
+        env:
+          DOMAIN: ${{ inputs.domain }}
+        run: |
+          set -euo pipefail
+          TOKEN='${{ inputs.vercel_token }}'
+          echo "::add-mask::$TOKEN"
+          VERCEL_TOKEN="$TOKEN" DOMAIN="$DOMAIN" node scripts/vercel-add-domain.mjs

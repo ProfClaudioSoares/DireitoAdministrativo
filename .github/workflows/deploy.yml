@@ -1,6 +1,15 @@
 name: Deploy
 
-# Push na main → produção (Supabase + Vercel). PR → preview no Vercel.
+# Push na main → produção. Duas responsabilidades:
+#   • Edge Functions do Supabase: deployadas AQUI, usando só o
+#     SUPABASE_ACCESS_TOKEN (descobre o ref pelo nome do projeto — sem senha do
+#     banco, que não fica no CI).
+#   • Front-end: publicado pela INTEGRAÇÃO NATIVA do Vercel com o GitHub (o
+#     projeto está conectado ao repo, branch de produção = main). Por isso NÃO
+#     há job de Vercel aqui — ele seria um deploy duplicado.
+#
+# Observação: migrações de schema (supabase db push) exigem a senha do banco e
+# não rodam no CI; são raras e aplicadas à parte quando necessário.
 on:
   push:
     branches: [main]
@@ -25,63 +34,30 @@ jobs:
       - run: npm test
       - run: npm run build
 
-  # ── Backend Supabase: só na main ────────────────────────────────────────────
-  supabase:
+  # ── Edge Functions do Supabase: só na main, com o access token ──────────────
+  functions:
     needs: check
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
-      - name: Link project
-        run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
-        env:
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-      - name: Push migrations
-        run: supabase db push --password "$SUPABASE_DB_PASSWORD"
-        env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-      - name: Deploy Edge Functions
-        run: >
-          supabase functions deploy
-          generate-carousel render-slides compliance-review mixpost-schedule publish-due-posts
-          --project-ref "$SUPABASE_PROJECT_REF"
-        env:
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-      # Os secrets das functions e os segredos do Vault (cron) são definidos uma
-      # vez, fora do CI (ver scripts/deploy.sh e supabase/migrations/0004_cron.sql).
-
-  # ── Front-end Vercel: preview em PR, produção na main ────────────────────────
-  vercel:
-    needs: check
-    runs-on: ubuntu-latest
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      PROJECT_NAME: estudio-conteudo-cs
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install Vercel CLI
-        run: npm i -g vercel@latest
-      - name: Deploy (produção)
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Deploy Edge Functions
         run: |
-          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-          vercel build --prod --token="$VERCEL_TOKEN"
-          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
-      - name: Deploy (preview)
-        if: github.event_name == 'pull_request'
-        run: |
-          vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
-          vercel build --token="$VERCEL_TOKEN"
-          url=$(vercel deploy --prebuilt --token="$VERCEL_TOKEN")
-          echo "Preview: $url"
-          echo "PREVIEW_URL=$url" >> "$GITHUB_ENV"
+          set -euo pipefail
+          [ -n "$SUPABASE_ACCESS_TOKEN" ] || { echo "Falta o secret SUPABASE_ACCESS_TOKEN."; exit 1; }
+          REF="$(supabase projects list -o json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const a=JSON.parse(s);const p=a.find(x=>x.name===process.argv[1]);process.stdout.write((p&&(p.id||p.ref))||"")}catch{process.exit(0)}})' "$PROJECT_NAME")"
+          [ -n "$REF" ] || { echo "Projeto '$PROJECT_NAME' não encontrado."; exit 1; }
+          echo "REF=$REF"
+          supabase functions deploy \
+            generate-carousel render-slides compliance-review publish-due-posts mixpost-schedule \
+            --project-ref "$REF"
+          echo "✔ Edge Functions deployadas."
